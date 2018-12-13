@@ -14,9 +14,9 @@ GET        /unauthorised                                controllers.Unauthorised
 
 # new endpoints DC-1642
 
-# GET        /message/make_inquiry                         controllers.UnauthorisedController.onPageLoad
+GET        /message/make_inquiry                         controllers.InquiryController.onPageLoad()
 
-# POST       /message/submit                               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
+POST       /message/submit                               controllers.InquiryController.onSubmit()
 
 # GET       /message/submitted                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
 
