@@ -11,3 +11,15 @@ GET        /this-service-has-been-reset                 controllers.SessionExpir
 GET        /check-your-answers                          controllers.CheckYourAnswersController.onPageLoad
 
 GET        /unauthorised                                controllers.UnauthorisedController.onPageLoad
+
+# new endpoints DC-1642
+
+# GET        /message/make_inquiry                         controllers.UnauthorisedController.onPageLoad
+
+# POST       /message/submit                               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
+
+# GET       /message/submitted                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
+
+# new endpoints DC1640
+
+GET        /hello-world                    controllers.HelloWorldController.onPageLoad
