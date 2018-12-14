@@ -31,6 +31,7 @@ import views.html.inquiry
 import play.api.mvc.{Action, AnyContent}
 
 import scala.concurrent.Future
+import utils.InputOption
 
 class InquiryController @Inject()(appConfig: FrontendAppConfig,
                                          override val messagesApi: MessagesApi,
@@ -45,8 +46,17 @@ class InquiryController @Inject()(appConfig: FrontendAppConfig,
       //   case None => form
       //   case Some(value) => form.fill(value)
       // }
+
+
+
+  def options: Seq[InputOption] = Seq(
+    InputOption("true", "inquiry.dropdown.p1", Some("vat_vat-form")),
+    InputOption("false", "inquiry.dropdown.p2", None),
+    InputOption("false", "inquiry.dropdown.p3", None)
+  )
+
       val preparedForm = form.fill(true)
-      Ok(inquiry(appConfig, preparedForm))
+      Ok(inquiry(appConfig, preparedForm, options))
   }
 
   def onSubmit() = //(identify andThen getData andThen requireData).async

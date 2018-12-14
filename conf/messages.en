@@ -40,5 +40,14 @@ site.continue = Continue
 site.service_name = two-way-message-frontend
 site.textarea.char_limit = (Limit is {0} characters)
 
+inquiry.title = Ask a secure question
+
+inquiry.heading = Inquiry heading
+
+inquiry.whatis = Type of the question
+inquiry.dropdown.p1 = Help with Self Assessment
+inquiry.dropdown.p2 = Help with Child Care
+inquiry.dropdown.p3 = Other Query
+
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account

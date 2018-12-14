@@ -19,10 +19,12 @@
 @import controllers.routes._
 @import utils.FormHelpers
 
-@(appConfig: FrontendAppConfig, form: Form[_] )(implicit request: Request[_], messages: Messages)
+@import utils.InputOption
+
+@(appConfig: FrontendAppConfig, form: Form[_], options: Seq[InputOption] )(implicit request: Request[_], messages: Messages)
 
 @main_template(
-    title = messages("corporateShareholder.title"),
+    title = messages("inquiry.title"),
     appConfig = appConfig,
     bodyClasses = None) {
 
@@ -30,12 +32,22 @@
 
     @components.error_summary(form.errors)
 
-    @components.heading("corporateShareholder.heading")
+    @components.heading("inquiry.heading")
 
     @components.text("corporateShareholder.text")
 
-    @components.info_dropdown("corporateShareholder.whatis", Seq("corporateShareholder.dropdown"))
+    @components.info_dropdown("inquiry.whatis",Seq("inquiry.dropdown.p1", "inquiry.dropdown.p2", "inquiry.dropdown.p3"))
 
+    <div class="panel panel-border-wide">@messages("eligible.info")</div>
+    
+    
+<div class="text-center">
+<select>
+  <option value="volvo">Volvo</option>
+  <option value="saab">Saab</option>
+  <option value="mercedes">Mercedes</option>
+  <option value="audi">Audi</option>
+</select>
     @helpers.form(action = InquiryController.onSubmit(), 'autoComplete -> "off") {
 
         @components.input_yes_no(
@@ -44,6 +56,14 @@
             labelClass = Some("visually-hidden")
         )
 
-        @components.submit_button()
+        )
     }
+
+@components.select(field = form("country"),
+    label = messages("address.country"),
+    options = options,
+    placeholder = Some("address.country.select"),
+    formGroupClasses = Set("autocomplete-wrapper")
+)
+</div>
 }
