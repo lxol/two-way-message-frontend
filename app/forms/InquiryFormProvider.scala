@@ -30,17 +30,8 @@ class InquiryFormProvider @Inject() extends FormErrorHelper with Mappings {
     Form(
       mapping(
         "queue" -> text(),
-          // queueMapping(queueOptions, "messages__error_country_required", "messages__error_country_invalid"),
-
-        "text" -> text("companyAddressDetails.error.field2.required")
-          .verifying(maxLength(100, "companyAddressDetails.error.field2.length"))
+        "content" -> text()
       )(InquiryDetails.apply)(InquiryDetails.unapply)
     )
-
-
-  // def queueMapping(countryOptions: InputOption, keyRequired: String, keyInvalid: String): Mapping[String] = {
-  //   text(keyRequired)
-  //     .verifying(country(countryOptions, keyInvalid))
-  // }
 
 }
