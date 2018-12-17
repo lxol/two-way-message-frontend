@@ -18,6 +18,7 @@ package controllers
 
 import javax.inject.Inject
 
+import play.api.{Configuration, Logger}
 import play.api.data.Form
 import play.api.i18n.{I18nSupport, MessagesApi}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -61,18 +62,35 @@ class InquiryController @Inject()(appConfig: FrontendAppConfig,
       Ok(inquiry(appConfig, form, options))
     }
 
-  def onSubmit() = //(identify andThen getData andThen requireData).async
-    Action {
-      implicit request =>
-      // form.bindFromRequest().fold(
-      //   (formWithErrors: Form[_]) =>
-      //     Future.successful(BadRequest(takingOverBusiness(appConfig, formWithErrors, NormalMode))),
-      //   (value) =>
-      //     dataCacheConnector.save[Boolean](request.internalId, TakingO
+  def onSubmit() = Action.async {
+    implicit request =>
 
-      //verBusinessId.toString, value).map(cacheMap =>
-      //       Redirect(navigator.nextPage(TakingOverBusinessId, NormalMode)(new UserAnswers(cacheMap))))
-      // )
-      ???
-    }
+      form.bindFromRequest().fold(
+        (formWithErrors: Form[_]) =>
+          Future.successful(BadRequest("asdfasdf")),
+
+        (inquiryDetails) => {
+
+          Logger.debug(s"inquiryDetails: ${inquiryDetails}")
+          // val dataToAudit = ExitSurvey.asMap(surveyData)
+          // val event = new ExitSurveyAuditEvent(dataToAudit)
+
+          Future.successful(Redirect(routes.InquiryFeedbackSuccessController.onPageLoad()))
+        }
+      )
+  }
+  // def onSubmit() = //(identify andThen getData andThen requireData).async
+  //   Action {
+  //     implicit request =>
+  //     // form.bindFromRequest().fold(
+  //     //   (formWithErrors: Form[_]) =>
+  //     //     Future.successful(BadRequest(takingOverBusiness(appConfig, formWithErrors, NormalMode))),
+  //     //   (value) =>
+  //     //     dataCacheConnector.save[Boolean](request.internalId, TakingO
+
+  //     //verBusinessId.toString, value).map(cacheMap =>
+  //     //       Redirect(navigator.nextPage(TakingOverBusinessId, NormalMode)(new UserAnswers(cacheMap))))
+  //     // )
+  //     ???
+  //   }
 }

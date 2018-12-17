@@ -18,6 +18,8 @@ GET        /message/make_inquiry                         controllers.InquiryCont
 
 POST       /message/submit                               controllers.InquiryController.onSubmit()
 
+GET        /message/feedback                             controllers.InquiryFeedbackSuccessController.onPageLoad()
+
 # GET       /message/submitted                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
 
 # new endpoints DC1640
