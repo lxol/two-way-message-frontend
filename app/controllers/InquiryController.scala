@@ -33,15 +33,22 @@ import play.api.mvc.{Action, AnyContent}
 import scala.concurrent.Future
 import utils.InputOption
 
-class InquiryController @Inject()(appConfig: FrontendAppConfig,
-                                         override val messagesApi: MessagesApi,
-                                         formProvider: InquiryFormProvider) extends FrontendController with I18nSupport {
+import models.InquiryDetails
 
-  val form: Form[Boolean] = formProvider()
+class InquiryController @Inject()(appConfig: FrontendAppConfig,
+  override val messagesApi: MessagesApi,
+  formProvider: InquiryFormProvider) extends FrontendController with I18nSupport {
+
+      def options: Seq[InputOption] = Seq(
+        InputOption("queue1", "inquiry.dropdown.p1", Some("vat_vat-form")),
+        InputOption("queue2", "inquiry.dropdown.p2", None),
+        InputOption("queue99", "inquiry.dropdown.p3", None)
+      )
+  val form: Form[InquiryDetails] = formProvider(options)
 
   def onPageLoad() = //(identify andThen getData andThen requireData)
     Action {
-    implicit request =>
+      implicit request =>
       // val preparedForm = request.userAnswers.takingOverBusiness match {
       //   case None => form
       //   case Some(value) => form.fill(value)
@@ -49,28 +56,23 @@ class InquiryController @Inject()(appConfig: FrontendAppConfig,
 
 
 
-  def options: Seq[InputOption] = Seq(
-    InputOption("true", "inquiry.dropdown.p1", Some("vat_vat-form")),
-    InputOption("false", "inquiry.dropdown.p2", None),
-    InputOption("false", "inquiry.dropdown.p3", None)
-  )
 
-      val preparedForm = form.fill(true)
-      Ok(inquiry(appConfig, preparedForm, options))
-  }
+      // val preparedForm = form.fill(options)
+      Ok(inquiry(appConfig, form, options))
+    }
 
   def onSubmit() = //(identify andThen getData andThen requireData).async
-  Action {
-    implicit request =>
+    Action {
+      implicit request =>
       // form.bindFromRequest().fold(
       //   (formWithErrors: Form[_]) =>
       //     Future.successful(BadRequest(takingOverBusiness(appConfig, formWithErrors, NormalMode))),
       //   (value) =>
       //     dataCacheConnector.save[Boolean](request.internalId, TakingO
 
-    //verBusinessId.toString, value).map(cacheMap =>
+      //verBusinessId.toString, value).map(cacheMap =>
       //       Redirect(navigator.nextPage(TakingOverBusinessId, NormalMode)(new UserAnswers(cacheMap))))
       // )
-    ???
-  }
+      ???
+    }
 }

@@ -34,36 +34,22 @@
 
     @components.heading("inquiry.heading")
 
-    @components.text("corporateShareholder.text")
-
-    @components.info_dropdown("inquiry.whatis",Seq("inquiry.dropdown.p1", "inquiry.dropdown.p2", "inquiry.dropdown.p3"))
-
-    <div class="panel panel-border-wide">@messages("eligible.info")</div>
-    
-    
-<div class="text-center">
-<select>
-  <option value="volvo">Volvo</option>
-  <option value="saab">Saab</option>
-  <option value="mercedes">Mercedes</option>
-  <option value="audi">Audi</option>
-</select>
     @helpers.form(action = InquiryController.onSubmit(), 'autoComplete -> "off") {
 
-        @components.input_yes_no(
-            field = form("value"),
-            label = messages("corporateShareholder.heading"),
-            labelClass = Some("visually-hidden")
-        )
 
-        )
+           @components.select(
+               field = form("queue"),
+               label = messages("inquiry.whatis"),
+               options = options,
+               formGroupClasses = Set("autocomplete-wrapper")
+           )
+
+           @components.input_textarea(
+               field = form("content"),
+               label = messages("inquiry.content")
+           )
+
+        @components.submit_button()
     }
 
-@components.select(field = form("country"),
-    label = messages("address.country"),
-    options = options,
-    placeholder = Some("address.country.select"),
-    formGroupClasses = Set("autocomplete-wrapper")
-)
-</div>
 }

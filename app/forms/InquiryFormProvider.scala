@@ -19,12 +19,28 @@ package forms
 import javax.inject.Inject
 
 import forms.mappings.Mappings
-import play.api.data.Form
+import play.api.data.{Form, Mapping}
+import play.api.data.Forms._
+import models.InquiryDetails
+import utils.InputOption
 
 class InquiryFormProvider @Inject() extends FormErrorHelper with Mappings {
 
-  def apply(): Form[Boolean] =
+  def apply(queueOptions: Seq[InputOption]): Form[InquiryDetails] =
     Form(
-      "value" -> boolean("corporateShareholder.error.required")
+      mapping(
+        "queue" -> text(),
+          // queueMapping(queueOptions, "messages__error_country_required", "messages__error_country_invalid"),
+
+        "text" -> text("companyAddressDetails.error.field2.required")
+          .verifying(maxLength(100, "companyAddressDetails.error.field2.length"))
+      )(InquiryDetails.apply)(InquiryDetails.unapply)
     )
+
+
+  // def queueMapping(countryOptions: InputOption, keyRequired: String, keyInvalid: String): Mapping[String] = {
+  //   text(keyRequired)
+  //     .verifying(country(countryOptions, keyInvalid))
+  // }
+
 }
