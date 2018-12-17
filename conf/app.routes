@@ -1,27 +1,11 @@
 # microservice specific routes
 
-GET        /                                            controllers.IndexController.onPageLoad
+GET        /                            controllers.IndexController.onPageLoad
+GET        /assets/*file                controllers.Assets.versioned(path="/public", file: Asset)
 
-GET        /assets/*file                                controllers.Assets.versioned(path="/public", file: Asset)
+GET        /message/make_inquiry         controllers.InquiryController.onPageLoad()
+POST       /message/submit               controllers.InquiryController.onSubmit()
+GET        /message/feedback             controllers.InquiryFeedbackSuccessController.onPageLoad()
+GET        /hello-world                  controllers.HelloWorldController.onPageLoad
 
-GET        /language/:lang                              controllers.LanguageSwitchController.switchToLanguage(lang: String)
-
-GET        /this-service-has-been-reset                 controllers.SessionExpiredController.onPageLoad
-
-GET        /check-your-answers                          controllers.CheckYourAnswersController.onPageLoad
-
-GET        /unauthorised                                controllers.UnauthorisedController.onPageLoad
-
-# new endpoints DC-1642
-
-GET        /message/make_inquiry                         controllers.InquiryController.onPageLoad()
-
-POST       /message/submit                               controllers.InquiryController.onSubmit()
-
-GET        /message/feedback                             controllers.InquiryFeedbackSuccessController.onPageLoad()
-
-# GET       /message/submitted                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
-
-# new endpoints DC1640
-
-GET        /hello-world                    controllers.HelloWorldController.onPageLoad
+GET        /language/:lang               controllers.LanguageSwitchController.switchToLanguage(lang: String)
