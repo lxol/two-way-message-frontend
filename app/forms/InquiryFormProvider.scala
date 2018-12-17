@@ -30,6 +30,7 @@ class InquiryFormProvider @Inject() extends FormErrorHelper with Mappings {
     Form(
       mapping(
         "queue" -> text(),
+        "subject" -> text(),
         "content" -> text()
       )(InquiryDetails.apply)(InquiryDetails.unapply)
     )

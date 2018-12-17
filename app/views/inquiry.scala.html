@@ -43,6 +43,11 @@
                formGroupClasses = Set("autocomplete-wrapper")
            )
 
+           @components.input_text(
+               field = form("subject"),
+               label = messages("inquiry.subject")
+           )
+
            @components.input_textarea(
                field = form("content"),
                label = messages("inquiry.content")

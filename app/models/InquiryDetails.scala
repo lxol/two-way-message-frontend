@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.json._
 
-case class InquiryDetails (queue: String, text: String)
+case class InquiryDetails (queue: String, subject: String, text: String)
 
 object InquiryDetails {
   implicit val format = Json.format[InquiryDetails]

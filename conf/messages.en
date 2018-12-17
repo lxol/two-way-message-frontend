@@ -52,6 +52,7 @@ inquiry.dropdown.p3 = Other Query
 inquiry.feedbackSuccess.heading = Thank you for your inquiry!
 
 inquiry.content = Your question:
+inquiry.subject = Subject:
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
