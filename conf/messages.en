@@ -36,20 +36,22 @@ site.hidden-delete = Delete {0}
 site.hidden-edit = Change {0}
 site.no = No
 site.yes = Yes
-site.continue = Continue
-site.service_name = two-way-message-frontend
+site.continue = Submit
+site.startAgain = Submit next inquiry
+site.service_name = Two way secure message frontend
 site.textarea.char_limit = (Limit is {0} characters)
 
-inquiry.title = Ask a secure question
+# inquiry.title = Ask a secure question
 
-inquiry.heading = Inquiry heading
+inquiry.heading = Ask a secure question
 
 inquiry.whatis = Type of the question
 inquiry.dropdown.p1 = Help with Self Assessment
 inquiry.dropdown.p2 = Help with Child Care
 inquiry.dropdown.p3 = Other Query
+inquiry.feedbackSuccess.heading = Thank you for your inquiry!
 
-inquiry.content = Inquiry content
+inquiry.content = Your question:
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
