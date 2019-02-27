@@ -1,0 +1,56 @@
+@*
+ * Copyright 2019 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import config.AppConfig
+@import uk.gov.hmrc.play.views.html._
+@import controllers.routes._
+@import utils.FormHelpers
+
+@(appConfig: AppConfig, form: Form[_], queue: String, email: Option[String], confirmEmail: Option[String])(implicit request: Request[_], messages: Messages)
+
+@helpers.form(action = EnquiryController.onSubmit(), 'autoComplete -> "off") {
+
+    <input type="hidden" id='@{form("queue").id}' name='@{form("queue").name}' value="@{queue}">
+
+    @components.input_text(
+        field = form("subject"),
+        label = messages("enquiry.subject"),
+        maxlength = Option(65),
+        overrideStyle = "width: 100%",
+        initialValue = ""
+    )
+
+    @components.input_text(
+        field = form("email"),
+        label = messages("enquiry.email"),
+        initialValue = ""
+    )
+
+    @components.input_text(
+        field = form("confirmEmail"),
+        label = messages("enquiry.confirmEmail"),
+        initialValue = ""
+    )
+
+    @components.input_textarea(
+        field = form("content"),
+        label = messages("enquiry.question"),
+        initialValue = ""
+    )
+
+    @components.submit_button()
+}
+
