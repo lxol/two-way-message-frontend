@@ -41,6 +41,17 @@ object TwoWayMessage {
       (m.contactDetails, m.subject, new String(Base64.encodeBase64String(m.content.getBytes("UTF-8"))), m.replyTo))
 }
 
+case class TwoWayMessageReply(content: String)
+
+object TwoWayMessageReply {
+
+    implicit val twoWayMessageReplyFormat = Json.format[TwoWayMessageReply]
+/*  implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] = (
+      (__ \ "content").write[String]
+    ) ((m: TwoWayMessageReply) =>
+      (new String(Base64.encodeBase64String(m.content.getBytes("UTF-8")))))*/
+}
+
 case class Identifier(id: String)
 
 object Identifier {

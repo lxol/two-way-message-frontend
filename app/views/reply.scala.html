@@ -18,39 +18,33 @@
 @import uk.gov.hmrc.play.views.html._
 @import controllers.routes._
 @import utils.FormHelpers
+@import models.ReplyDetails
 
-@(appConfig: AppConfig, form: Form[_], queue: String, email: Option[String], confirmEmail: Option[String])(implicit request: Request[_], messages: Messages)
+@(queueId: String, replyTo: String, appConfig: AppConfig, form: Form[_], defaultReplyDetails: ReplyDetails)(implicit request: Request[_], messages: Messages)
 
-@helpers.form(action = EnquiryController.onSubmit(), 'autoComplete -> "off") {
+@main_template(
+    title = messages("reply.title"),
+    appConfig = appConfig,
+    bodyClasses = None) {
 
-    <input type="hidden" id='@{form("queue").id}' name='@{form("queue").name}' value="@{queue}">
+    @components.back_link()
 
-    @components.input_text(
-        field = form("subject"),
-        label = messages("enquiry.subject"),
-        maxlength = Option(65),
-        overrideStyle = "width: 100%",
-        initialValue = ""
-    )
+    @components.error_summary(form.errors)
 
-    @components.input_text(
-        field = form("email"),
-        label = messages("enquiry.email"),
-        initialValue = ""
-    )
+    @components.heading("reply.heading")
 
-    @components.input_text(
-        field = form("confirmEmail"),
-        label = messages("enquiry.confirmEmail"),
-        initialValue = ""
-    )
+    <div>Our team will reply within 7 working days</div>
 
-    @components.input_textarea(
-        field = form("content"),
-        label = messages("enquiry.question"),
-        initialValue = ""
-    )
+    @helpers.form(action = ReplyController.onSubmit(queueId, replyTo), 'autoComplete -> "off") {
 
-    @components.submit_button()
+
+        @components.input_textarea(
+            field = form("content"),
+            label = messages("reply.question"),
+            initialValue = defaultReplyDetails.content
+        )
+
+        @components.submit_button()
+    }
 }
 
