@@ -93,49 +93,43 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
     }
   }
 
-  // Please see integration tests for auth failure scenarios as these are handled by the ErrorHandler class
+  //Please see integration tests for auth failure scenarios as these are handled by the ErrorHandler class
 
-  // "calling onSubmit()" should {
-  //   val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit())
-  //   val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-  //     "queue" -> "queue1",
-  //     "subject" -> "test subject",
-  //     "content" -> "test content",
-  //     "email" -> "test@test.com",
-  //     "confirmEmail" -> "test@test.com"
-  //   )
+  "calling onSubmit()" should {
+    val queueId = "p800"
+    val messageId = "543e92e101000001006300c9"
+    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(queueId, messageId))
+    val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
+      "content" -> "test content"
+    )
 
-  //   val replyDetails = ReplyDetails(
-  //     "queue1",
-  //     "test subject",
-  //     "test content",
-  //     "test@test.com",
-  //     "test@test.com"
-  //   )
+    val replyDetails = ReplyDetails(
+      "test content"
+    )
 
-  //   val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-  //     "bad" -> "value",
-  //     "queue" -> "This will always be present"
-  //   )
+    val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
+      "bad" -> "value",
+      "queue" -> "This will always be present"
+    )
 
-  //   "return 303 (SEE_OTHER) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
-  //     val twmPostMessageResponse = Json.parse(
-  //       """
-  //         |    {
-  //         |     "id":"5c18eb166f0000110204b160"
-  //         |    }""".stripMargin)
+    "return 303 (SEE_OTHER) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
+      val twmPostMessageResponse = Json.parse(
+        """
+          |    {
+          |     "id":"5c18eb166f0000110204b160"
+          |    }""".stripMargin)
 
-  //     val nino = Nino("AB123456C")
-  //     mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-  //     when(mockTwoWayMessageConnector.postMessage(ArgumentMatchers.eq(replyDetails))(any[HeaderCarrier])).thenReturn(
-  //       Future.successful(
-  //         HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
-  //       )
-  //     )
-  //     val result = await(call(controller.onSubmit(), requestWithFormData))
-  //     result.header.status shouldBe Status.SEE_OTHER
-  //     result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeId=5c18eb166f0000110204b160"
-  //   }
+      val nino = Nino("AB123456C")
+      mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
+      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(queueId), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+        Future.successful(
+          HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
+        )
+      )
+      val result = await(call(controller.onSubmit(queueId, messageId), requestWithFormData))
+      result.header.status shouldBe Status.SEE_OTHER
+      result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeId=5c18eb166f0000110204b160"
+    }
 
   //   "return 303 (SEE_OTHER) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
   //     val bad2wmPostMessageResponse = Json.parse("{}")
@@ -171,7 +165,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
   //     result.header.status shouldBe Status.SEE_OTHER
   //     result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeError=Error+sending+reply+details"
   //   }
-  // }
+  }
 
   // "validation should" should {
   //   val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit())
