@@ -17,7 +17,8 @@
 package connectors
 
 import javax.inject.{Inject, Singleton}
-import models.{ContactDetails, EnquiryDetails, TwoWayMessage}
+import models.{ContactDetails, EnquiryDetails, TwoWayMessage, TwoWayMessageReply}
+import models.{ReplyDetails, Identifier, MessageError}
 import play.api.http.Status
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -42,5 +43,12 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
       details.content
     )
     httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/${details.queue}/submit", message)
+  }
+
+  def postReplyMessage(details: ReplyDetails, queueId: String, replyTo: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    val message = TwoWayMessageReply(
+      details.content
+    )
+    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/${queueId}/${replyTo}/reply", message)
   }
 }

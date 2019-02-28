@@ -9,3 +9,9 @@ GET         /message/submitted          controllers.EnquirySubmittedController.o
 
 GET         /language/:lang             controllers.LanguageSwitchController.switchToLanguage(lang: String)
 GET         /messages                   controllers.EnquiryController.messagesRedirect()
+
+POST       /message/customer/:queueId/:replyTo/reply    controllers.ReplyController.onSubmit(queueId, replyTo)
+
+GET         /message/customer/:queueId/:replyTo/submitted         controllers.ReplySubmittedController.onPageLoad(queueId, replyTo, maybeId: Option[Identifier],maybeError: Option[MessageError])
+
+GET         /message/customer/:queueId/:replyTo/reply   controllers.ReplyController.onPageLoad(queueId, replyTo)
