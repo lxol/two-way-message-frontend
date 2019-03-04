@@ -44,12 +44,8 @@ object TwoWayMessage {
 case class TwoWayMessageReply(content: String)
 
 object TwoWayMessageReply {
-
-    implicit val twoWayMessageReplyFormat = Json.format[TwoWayMessageReply]
-/*  implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] = (
-      (__ \ "content").write[String]
-    ) ((m: TwoWayMessageReply) =>
-      (new String(Base64.encodeBase64String(m.content.getBytes("UTF-8")))))*/
+     implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
+     (( JsPath \ "content").write[String]).contramap((m: TwoWayMessageReply) => (new String(Base64.encodeBase64String(m.content.getBytes("UTF-8")))))
 }
 
 case class Identifier(id: String)

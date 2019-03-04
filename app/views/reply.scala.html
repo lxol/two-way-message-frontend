@@ -31,17 +31,20 @@
 
     @components.error_summary(form.errors)
 
-    @components.heading("reply.heading")
+    @components.heading(messages("reply.heading"))
+
+    <div>You have until ??? to reply</div>
 
 
-    <div>Our team will reply within 7 working days</div>
+    <h2>@messages("reply.question")</h2>
+    <div>More detail will help us answer your question quickly.</div>
 
     @helpers.form(action = ReplyController.onSubmit(queueId, replyTo), 'autoComplete -> "off") {
 
 
         @components.input_textarea(
             field = form("content"),
-            label = messages("reply.question"),
+            label = messages(""),
             initialValue = defaultReplyDetails.content
         )
 
