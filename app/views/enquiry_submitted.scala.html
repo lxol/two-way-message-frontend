@@ -34,4 +34,7 @@ bodyClasses = None) {
     <p>@messages("enquiry.success.next.para3") <a href="@routes.EnquiryController.messagesRedirect()">@messages("enquiry.success.next.link_text")</a>.</p>
     <a id="start-again" href="@routes.EnquiryController.personalAccountRedirect()" class="button">@messages("site.account.home")</a>
 
+    @if(appConfig.perfTestFlag) {
+    <!--- messageId=@ref -->
+    }
 }

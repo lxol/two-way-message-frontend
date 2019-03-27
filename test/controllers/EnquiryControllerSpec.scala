@@ -42,7 +42,12 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector {
+import play.api.{Configuration, Environment}
+
+import play.api.i18n.{I18nSupport, MessagesApi}
+import config.FrontendAppConfig
+
+class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector with I18nSupport {
 
   lazy val mockTwoWayMessageConnector = mock[TwoWayMessageConnector]
   lazy val mockPreferencesConnector = mock[PreferencesConnector]
@@ -244,5 +249,28 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector {
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByClass("error-summary-list").html() shouldBe "<li><a href=\"#subject\">Subject has a maximum length of 65 characters</a></li>"
     }
+  }
+
+  "enquiry_submitted view " should {
+    import views.html.enquiry_submitted
+    val env = Environment.simple()
+    val testMessageId = "5c9a36c30d00008f0093aae8"
+    "includes messageId in a comment if perf-test-flag is true" in {
+      val configuration = Configuration.load(env) ++ Configuration.from(Map("perf-test-flag" -> "true"))
+      val config = new FrontendAppConfig(configuration, env)
+      enquiry_submitted(config, testMessageId).body should include(s"messageId=${testMessageId}")
+    }
+
+    "not include messageId in a comment if perf-test-flag is false" in {
+      val configuration = Configuration.load(env) ++ Configuration.from(Map("perf-test-flag" -> "false"))
+      val config = new FrontendAppConfig(configuration, env)
+      enquiry_submitted(config, testMessageId).body should not include(s"messageId=${testMessageId}")
+    }
+
+    "not include messageId in a comment if perf-test-flag is missing" in {
+      val config = new FrontendAppConfig(Configuration.load(env), env)
+      enquiry_submitted(config, testMessageId).body  should not include(s"messageId=${testMessageId}")
+    }
+
   }
 }

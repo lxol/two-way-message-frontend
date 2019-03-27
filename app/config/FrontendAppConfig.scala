@@ -37,6 +37,7 @@ trait AppConfig {
 //  val loginUrl: String
 //  val loginContinueUrl: String
   val languageTranslationEnabled: Boolean
+  val perfTestFlag: Boolean
   def languageMap: Map[String, Lang]
   def routeToSwitchLanguage: String => Call
 }
@@ -70,4 +71,6 @@ class FrontendAppConfig @Inject() (override val runModeConfiguration: Configurat
     "english" -> Lang("en"),
     "cymraeg" -> Lang("cy"))
   def routeToSwitchLanguage: String => Call = (lang: String) => routes.LanguageSwitchController.switchToLanguage(lang)
+
+  lazy val perfTestFlag = runModeConfiguration.getBoolean("perf-test-flag").getOrElse(false)
 }
