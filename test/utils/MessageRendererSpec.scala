@@ -34,7 +34,7 @@ class MessageRendererSpec extends WordSpec  with MockitoSugar with  Fixtures wit
     "MessageRenderingService.renderMessage" should {
             "render one message " in {
             val messageId = "12345"
-            val messages = List(Json.parse(v3Message(messageId)).validate[ConversationItem].get)
+            val messages = List(Json.parse(conversationItem(messageId)).validate[ConversationItem].get)
 
             val result = messageRenderingService.renderMessages(messages)
             result should be("<h1>")

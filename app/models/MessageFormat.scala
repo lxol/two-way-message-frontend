@@ -35,9 +35,9 @@ object MessageFormat {
             Writes.enumNameWrites
         )
 
-  implicit val detailsV3Format: Format[ConversationItemDetails] = Json.format[ConversationItemDetails]
+  implicit val conversationItemDetailsFormat: Format[ConversationItemDetails] = Json.format[ConversationItemDetails]
 
-  implicit val messageV3Format: Format[ConversationItem] = Json.format[ConversationItem]
+  implicit val conversationItemFormat: Format[ConversationItem] = Json.format[ConversationItem]
 
 }
 

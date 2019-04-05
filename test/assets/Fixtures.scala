@@ -21,7 +21,7 @@ import models._
 
 trait Fixtures {
 
-  val testMessageV3 = ConversationItem(
+  val testConversationItem = ConversationItem(
     subject = "test subject",
     body = Some(ConversationItemDetails(
       `type` = MessageType.Advisor,
@@ -34,7 +34,7 @@ trait Fixtures {
     content = Some("test-content")
   )
 
-  def v3Message(id:String) =
+  def conversationItem(id:String) =
      s"""
      | {
      |     "renderUrl": {
@@ -83,11 +83,11 @@ trait Fixtures {
      | }
      """.stripMargin
 
-  def v3Messages(id1:String, id2: String) =
+  def conversationItems(id1:String, id2: String) =
     s"""
            | [
-           | ${v3Message(id1)},
-           | ${v3Message(id2)}
+           | ${conversationItem(id1)},
+           | ${conversationItem(id2)}
            | ]
          """.stripMargin
 

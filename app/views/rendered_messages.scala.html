@@ -20,9 +20,9 @@
 @import controllers.routes._
 @import utils.DateUtils
 
-@import models.MessageV3
+@import models.ConversationItem
 
-@(messages: List[MessageV3])
+@(messages: List[ConversationItem])
 
 
 @for(message <- messages) {
