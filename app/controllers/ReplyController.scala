@@ -20,10 +20,10 @@ import config.AppConfig
 import connectors.TwoWayMessageConnector
 import forms.ReplyFormProvider
 import javax.inject.{Inject, Singleton}
-import models.{Identifier, MessageError, ConversationItem, ReplyDetails}
+import models.{Identifier, MessageError, ReplyDetails}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Request}
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
 import uk.gov.hmrc.http.HttpResponse
@@ -32,7 +32,6 @@ import utils.MessageRenderer
 import views.html.{enquiry_submitted, error_template, reply}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 @Singleton
 class ReplyController @Inject()(appConfig: AppConfig,
@@ -73,15 +72,24 @@ class ReplyController @Inject()(appConfig: AppConfig,
               } yield BadRequest(reply(queueId, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors),before, after))
           },
           replyDetails =>
-            twoWayMessageConnector.postReplyMessage(replyDetails, queueId, replyTo).map(response => response.status match {
-              case CREATED => extractId(response) match {
-                case Right(id) => Ok(enquiry_submitted(appConfig, id.id))
-                case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
-              }
-              case _ => Ok(error_template("Error", "There was an error:", "Error sending reply details", appConfig))
-            })
+            submitMessage(queueId,replyDetails,replyTo)
         )
       }
+  }
+
+  def submitMessage(queueId: String, replyDetails: ReplyDetails, replyTo: String)(implicit request: Request[_]) = {
+    for {
+      waitTime <- twoWayMessageConnector.getWaitTime(queueId)
+      response <- twoWayMessageConnector.postReplyMessage(replyDetails, queueId, replyTo)
+    } yield {
+      response.status match {
+        case CREATED => extractId(response) match {
+          case Right(id) => Ok(enquiry_submitted(appConfig, id.id, waitTime))
+          case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
+        }
+        case _ => Ok(error_template("Error", "There was an error:", "Error sending reply details", appConfig))
+      }
+    }
   }
 
   def extractId(response: HttpResponse): Either[MessageError, Identifier] = {

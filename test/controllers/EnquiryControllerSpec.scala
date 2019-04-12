@@ -64,6 +64,8 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       })
       .build()
   }
+  when(mockTwoWayMessageConnector.getWaitTime(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("7 days"))
+  when(mockPreferencesConnector.getPreferredEmail(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("preferredEmail@test.com"))
 
   val controller = injector.instanceOf[EnquiryController]
 
@@ -235,18 +237,18 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
     "includes messageId in a comment if perf-test-flag is true" in {
       val configuration = Configuration.load(env) ++ Configuration.from(Map("perf-test-flag" -> "true"))
       val config = new FrontendAppConfig(configuration, env)
-      enquiry_submitted(config, testMessageId).body should include(s"messageId=${testMessageId}")
+      enquiry_submitted(config, testMessageId, "7 days").body should include(s"messageId=${testMessageId}")
     }
 
     "not include messageId in a comment if perf-test-flag is false" in {
       val configuration = Configuration.load(env) ++ Configuration.from(Map("perf-test-flag" -> "false"))
       val config = new FrontendAppConfig(configuration, env)
-      enquiry_submitted(config, testMessageId).body should not include(s"messageId=${testMessageId}")
+      enquiry_submitted(config, testMessageId, "7 days").body should not include(s"messageId=${testMessageId}")
     }
 
     "not include messageId in a comment if perf-test-flag is missing" in {
       val config = new FrontendAppConfig(Configuration.load(env), env)
-      enquiry_submitted(config, testMessageId).body  should not include(s"messageId=${testMessageId}")
+      enquiry_submitted(config, testMessageId, "7 days").body  should not include(s"messageId=${testMessageId}")
     }
 
   }
