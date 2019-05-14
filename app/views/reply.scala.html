@@ -30,7 +30,7 @@
 
     @components.error_summary(form.errors)
 
-    @components.heading(messages("reply.heading"))
+    @components.heading("reply.heading", "reply-heading")
 
     @before
     @helpers.form(action = ReplyController.onSubmit(queueId, replyTo), 'autoComplete -> "off", 'novalidate -> "off") {
