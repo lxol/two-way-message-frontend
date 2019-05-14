@@ -147,7 +147,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
 
       click on find(id("submit")).value
 
-      eventually { pageSource must include ("Please enter a subject") }
+      eventually { pageSource must include ("Enter a subject") }
     }
 
 //    "display error message if subject is longer than max" in {
@@ -185,7 +185,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
 
         click on find(id("submit")).value
 
-        eventually { pageSource must include ("Please enter a question") }
+        eventually { pageSource must include ("Enter a question") }
       }
 
 

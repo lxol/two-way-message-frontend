@@ -8,7 +8,7 @@ date.year = Year
 
 error.browser.title.prefix = Error:
 error.boolean = Please give an answer
-error.email = Email is invalid
+error.email = Enter a valid email
 error.invalid_date = Give a correct date
 error.date.day_blank = Enter a day
 error.date.day_invalid = Give a correct day using numbers 1 to 31
@@ -46,7 +46,7 @@ site.textarea.char_limit = (Limit is {0} characters)
 enquiry.title = Ask a secure question
 enquiry.heading = Send your message
 enquiry.subject = Your subject
-enquiry.email = Your email
+enquiry.email = Email address
 enquiry.confirmEmail = Confirm email
 enquiry.whatis = Type of the question
 enquiry.question = What is your question?
