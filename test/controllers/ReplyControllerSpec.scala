@@ -96,7 +96,6 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
       val result = call(controller.onPageLoad("P800", "messageid"), fakeRequest)
       status(result) shouldBe Status.OK
-      val document = Jsoup.parse(contentAsString(result))
     }
   }
 
