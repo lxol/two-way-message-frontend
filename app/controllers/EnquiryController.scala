@@ -23,7 +23,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
-import play.api.mvc.{Action, AnyContent, QueryStringBindable}
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import views.html.{enquiry, enquiry_submitted, error_template}
 
@@ -43,17 +43,14 @@ class EnquiryController @Inject()(appConfig: AppConfig,
                                   preferencesConnector: PreferencesConnector)
   extends FrontendController with AuthorisedFunctions with I18nSupport {
 
-  private final val BACKCODE = "backCode"
-
   val form: Form[EnquiryDetails] = formProvider()
 
   def onPageLoad(queue: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised(Enrolment("HMRC-NI")).retrieve(Retrievals.nino) {
         case Some(nino) =>
-          val backCode:Option[String] = request.queryString.get(BACKCODE).map( _.head)
           preferencesConnector.getPreferredEmail(nino).map(preferredEmail => {
-              Ok(enquiry(appConfig, form, EnquiryDetails(queue, "", "", preferredEmail, backCode)))
+              Ok(enquiry(appConfig, form, EnquiryDetails(queue, "", "", preferredEmail)))
             }
           )
         case _ => Future.successful(Forbidden)
@@ -105,21 +102,4 @@ class EnquiryController @Inject()(appConfig: AppConfig,
     }
 
 
-  case class QueryParams( backCode: Option[String] = None)
-
-  implicit def queryStringBindable(implicit stringBinder: QueryStringBindable[String]) = new QueryStringBindable[QueryParams] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, QueryParams]] = {
-      for {
-        backCode <- stringBinder.bind("backCode", params)
-      } yield {
-        backCode match {
-          case Right(backCode) => Right(QueryParams(Some(backCode)))
-          case _ => Left("Unable find backCode value")
-        }
-      }
-    }
-    override def unbind(key: String, queryParams: QueryParams): String = {
-      stringBinder.unbind("backCode", queryParams.backCode.getOrElse(""))
-    }
-  }
 }

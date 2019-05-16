@@ -246,7 +246,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
 
       val result = call(enquiryController.onPageLoad("p800"), fakeRequest)
-      contentAsString(result) must include ("javascript:window.history.back()")
+      contentAsString(result) must not include ("javascript:window.history.go(-1)")
     }
 
     "go back to a given location when something is passed" in {
@@ -258,7 +258,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800/make_enquiry?backCode=SGVsbG8gV29ybGQ%3D")
 
       val result = call(enquiryController.onPageLoad("p800"), aFakeRequest)
-      contentAsString(result) must include ("Hello World")
+      contentAsString(result) must not include ("javascript:window.history.go(-1)")
     }
 
     "if something passed but is invalid then use defaults" in {
@@ -270,7 +270,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800/make_enquiry?backCode=hello")
 
       val result = call(enquiryController.onPageLoad("p800"), aFakeRequest)
-      contentAsString(result) must include ("javascript:window.history.back()")
+      contentAsString(result) must not include ("javascript:window.history.go(-1)")
 
     }
   }

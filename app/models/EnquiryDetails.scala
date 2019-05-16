@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.json._
 
-case class EnquiryDetails(queue: String, subject: String, question: String, email: String, backCode: Option[String]=None)
+case class EnquiryDetails(queue: String, subject: String, question: String, email: String)
 
 
 object EnquiryDetails {

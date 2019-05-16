@@ -15,9 +15,9 @@
  *@
 
 @import java.util.Base64
-@(backCode:Option[String]=None)(implicit messages: Messages)
+@()(implicit messages: Messages)
 
 <div class="js-visible">
- <p><a id="back-link" class="link-back" onclick="@{ backCode.fold("javascript:window.history.back()"){ b => scala.util.Try{Base64.getDecoder.decode(b)} match{ case scala.util.Success(s) => new String(s); case scala.util.Failure(_) => "javascript:window.history.back();"}  } }" href="#">@messages("site.back")</a></p>
+ <p><a id="back-link" class="link-back"  href="#">@messages("site.back")</a></p>
 
 </div>
