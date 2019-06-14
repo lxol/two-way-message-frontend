@@ -29,4 +29,36 @@ class TwoWayMessageSpec extends FunSuite {
 
     assert( json.toString === """{"content":"SGVsbG8gV29ybGQ="}""")
   }
+
+  test("HTMLEncode - check CR are replaced with <br>") {
+    val s =
+      """Hello
+        |World""".stripMargin
+
+    val result = HTMLEncode.text2HTML(s)
+    assert( "Hello <br />World" === result)
+  }
+
+  test("HTMLEncode - check ampersand") {
+    val s = """Hello & World"""
+
+    val result = HTMLEncode.text2HTML(s)
+    assert( "Hello &amp; World" === result)
+  }
+
+  test("HTMLEncode - check angled brackets") {
+    val s = """Hello <World>"""
+
+    val result = HTMLEncode.text2HTML(s)
+    assert( "Hello &lt;World&gt;" === result)
+  }
+
+  test("HTMLEncode - encoding") {
+    val s = """Hello & <World>"""
+
+    val result = HTMLEncode.encode(s)
+    assert( "SGVsbG8gJmFtcDsgJmx0O1dvcmxkJmd0Ow==" === result)
+  }
+
+
 }
