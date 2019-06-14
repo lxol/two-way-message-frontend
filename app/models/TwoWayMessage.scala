@@ -38,14 +38,14 @@ object TwoWayMessage {
       (__ \ "content").write[String] and
       (__ \ "replyTo").writeNullable[String]
     ) ((m: TwoWayMessage) =>
-      (m.contactDetails, m.subject, new String(Base64.encodeBase64String(m.content.getBytes("UTF-8"))), m.replyTo))
+    (m.contactDetails, m.subject, HTMLEncode.encode(m.content), m.replyTo) )
 }
 
 case class TwoWayMessageReply(content: String)
 
 object TwoWayMessageReply {
      implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
-     (( JsPath \ "content").write[String]).contramap((m: TwoWayMessageReply) => (new String(Base64.encodeBase64String(m.content.getBytes("UTF-8")))))
+     (( JsPath \ "content").write[String]).contramap((m: TwoWayMessageReply) => HTMLEncode.encode(m.content))
 }
 
 case class Identifier(id: String)
@@ -57,5 +57,24 @@ object Identifier {
 
 case class MessageError(text: String)
 
+
+object HTMLEncode {
+
+  def encode( s:String ): String =
+    new String(Base64.encodeBase64String(HTMLEncode.text2HTML(s).getBytes("UTF-8")))
+
+  def text2HTML( txt:String): String = {
+    def build( c:Char): String = c match {
+      case '<' => "&lt;"
+      case '>' => "&gt;"
+      case '&' => "&amp;"
+      case '\n' => " <br />"
+      case c =>  c.toString
+    }
+
+    txt.foldLeft(""){ (s,c) => s + build(c)}
+  }
+
+}
 
 
