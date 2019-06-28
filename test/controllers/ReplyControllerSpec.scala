@@ -47,10 +47,13 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
   lazy val mockTwoWayMessageConnector = mock[TwoWayMessageConnector]
   lazy val mockMessageRenderer = mock[MessageRenderer]
+  lazy val timeResponse = "7 days"
 
   when(mockMessageRenderer.renderMessage(any())).thenReturn(Html(""))
   when(mockMessageRenderer.renderMessages(any())).thenReturn(Html(""))
   when(mockTwoWayMessageConnector.getMessages(any())(any())).thenReturn(List[ConversationItem]())
+  when(mockTwoWayMessageConnector.getWaitTime(any[String])(any[HeaderCarrier])).thenReturn(Future.successful(timeResponse))
+
   override def fakeApplication(): Application = {
 
     new GuiceApplicationBuilder()
@@ -134,6 +137,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
           HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
         )
       )
+
       val result = await(call(controller.onSubmit(queueId, messageId), requestWithFormData))
       result.header.status shouldBe Status.OK
     }

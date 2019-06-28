@@ -64,6 +64,9 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
   "Frontend test" should {
     "find the home page ok" in {
       mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      when(twoWayMessageConnector.getWaitTime(ArgumentMatchers.eq("p800"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful("7 days")
+      }
       when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }

@@ -64,7 +64,6 @@ enquiry.success.next.para3 = You can
 enquiry.success.next.para4 = by signing in to HMRC services.
 enquiry.success.next.link_text = view your messages
 
-reply.wait.time = 7 days
 reply.title = Reply to a secure answer
 reply.heading = Send a message about this subject
 reply.question = What do you want to add?

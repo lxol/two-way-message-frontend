@@ -16,6 +16,8 @@
 
 package controllers
 
+import java.util.concurrent.TimeUnit
+
 import config.AppConfig
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import forms.EnquiryFormProvider
@@ -23,14 +25,15 @@ import javax.inject.{Inject, Singleton}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Request}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import views.html.{enquiry, enquiry_submitted, error_template}
 
 import scala.concurrent.{ExecutionContext, Future}
 import models.{EnquiryDetails, Identifier, MessageError}
+import org.omg.PortableInterceptor.SUCCESSFUL
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import ExecutionContext.Implicits.global
 
@@ -49,33 +52,43 @@ class EnquiryController @Inject()(appConfig: AppConfig,
     implicit request =>
       authorised(Enrolment("HMRC-NI")).retrieve(Retrievals.nino) {
         case Some(nino) =>
-          preferencesConnector.getPreferredEmail(nino).map(preferredEmail => {
-              Ok(enquiry(appConfig, form, EnquiryDetails(queue, "", "", preferredEmail)))
-            }
-          )
+          for {
+            waitTime <- twoWayMessageConnector.getWaitTime(queue)
+            email <- preferencesConnector.getPreferredEmail(nino)
+          } yield {
+            Ok(enquiry(appConfig, form, EnquiryDetails(queue, "", "", email), waitTime))
+          }
         case _ => Future.successful(Forbidden)
+      } recoverWith {
+        case _ => Future.successful(InternalServerError)
       }
     }
 
   def onSubmit(): Action[AnyContent] = Action.async {
     implicit request =>
       authorised(Enrolment("HMRC-NI")) {
-        form.bindFromRequest().fold(
-          (formWithErrors: Form[EnquiryDetails]) => {
-            Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors))))
-          },
+        val queue = form.bindFromRequest().data("queue")
+        twoWayMessageConnector.getWaitTime(queue).flatMap(waitTime =>
+          form.bindFromRequest().fold(
+            (formWithErrors: Form[EnquiryDetails]) => {
+              Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors), waitTime)))
+            },
             enquiryDetails => {
-                twoWayMessageConnector.postMessage(enquiryDetails).map(response => response.status match {
-                  case CREATED => extractId(response) match {
-                    case Right(id) => Ok(enquiry_submitted(appConfig, id.id))
-                    case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
-                  }
-                  case _ =>
-                    Ok(error_template("Error", "There was an error:", "Error sending enquiry details", appConfig))
-                })
-              }
+              submitMessage(enquiryDetails, waitTime)
+            }
+          )
         )
       }
+  }
+
+  def submitMessage(enquiryDetails: EnquiryDetails, waitTime: String)(implicit request: Request[_]) = {
+      twoWayMessageConnector.postMessage(enquiryDetails).map(response => response.status match {
+        case CREATED => extractId(response) match {
+          case Right(id) => Ok(enquiry_submitted(appConfig, id.id, waitTime))
+          case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
+        }
+        case _ => Ok(error_template("Error", "There was an error:", "Error sending enquiry details", appConfig))
+      })
   }
 
   def messagesRedirect = Action {

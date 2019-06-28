@@ -17,11 +17,12 @@
 package connectors
 
 import javax.inject.{Inject, Singleton}
+
 import models.MessageFormat._
 import models._
 import play.api.Mode.Mode
 import play.api.http.Status
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.{Format, JsError, Json}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -61,4 +62,12 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
           errors => Future.failed(new Exception(Json stringify JsError.toJson(errors))),
           msgList => Future.successful(msgList))
       }
+
+  implicit val waitTimeResponseJson: Format[WaitTimeResponse] = Json.format[WaitTimeResponse]
+
+  case class WaitTimeResponse(responseTime: String)
+
+  def getWaitTime(formId: String)(implicit hc: HeaderCarrier): Future[String] =
+    httpClient.GET[WaitTimeResponse](s"${twoWayMessageBaseUrl}/two-way-message/message/admin/$formId/response-time")
+      .map(e => e.responseTime)
 }
