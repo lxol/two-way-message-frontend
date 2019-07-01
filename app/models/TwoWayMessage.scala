@@ -20,12 +20,13 @@ import org.apache.commons.codec.binary.Base64
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, Writes, _}
 
+import scala.xml.{Node, NodeBuffer, Text}
 
 case class ContactDetails(email: String)
 
 object ContactDetails {
 
-  implicit val format = Json.format[ContactDetails]
+  implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 
 case class TwoWayMessage(contactDetails: ContactDetails, subject: String, content: String, replyTo: Option[String] = None)
@@ -38,41 +39,56 @@ object TwoWayMessage {
       (__ \ "content").write[String] and
       (__ \ "replyTo").writeNullable[String]
     ) ((m: TwoWayMessage) =>
-    (m.contactDetails, m.subject, HTMLEncode.encode(m.content), m.replyTo) )
+    (m.contactDetails, m.subject, HTMLEncoder.encode(m.content), m.replyTo) )
 }
 
 case class TwoWayMessageReply(content: String)
 
 object TwoWayMessageReply {
      implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
-     (( JsPath \ "content").write[String]).contramap((m: TwoWayMessageReply) => HTMLEncode.encode(m.content))
+     ( JsPath \ "content").write[String].contramap((m: TwoWayMessageReply) => HTMLEncoder.encode(m.content))
 }
 
 case class Identifier(id: String)
 
 object Identifier {
 
-  implicit val id = Json.reads[Identifier]
+  implicit val id: Reads[Identifier] = Json.reads[Identifier]
 }
 
 case class MessageError(text: String)
 
 
-object HTMLEncode {
+object HTMLEncoder {
 
-  def encode( s:String ): String =
-    new String(Base64.encodeBase64String(HTMLEncode.text2HTML(s).getBytes("UTF-8")))
+  def encode(text:String): String = {
 
-  def text2HTML( txt:String): String = {
-    def build( c:Char): String = c match {
-      case '<' => "&lt;"
-      case '>' => "&gt;"
-      case '&' => "&amp;"
-      case '\n' => " <br />"
-      case c =>  c.toString
+    val xhtml = splitParas(text).map{para =>
+      <p>{text2XML(para)}</p>
+    }
+    val xhtmlText = xhtml.mkString
+    base64Encode(xhtmlText)
+  }
+
+  private def base64Encode(text: String): String =
+    new String(Base64.encodeBase64String(text.getBytes("UTF-8")))
+
+  private def splitParas(text: String): Seq[String] = {
+    text.split("[\\n]{2,}")
+  }
+
+  private def text2XML(text: String):Seq[Node] = {
+
+    def build(c: Char):Node = c match {
+      case '<' => Text("<")
+      case '>' => Text(">")
+      case '&' => Text("&")
+      case '\n' => <br/>
+      case '\r' => Text("")
+      case c =>  Text(c.toString)
     }
 
-    txt.foldLeft(""){ (s,c) => s + build(c)}
+    text.foldLeft[NodeBuffer](new NodeBuffer()){ (s,c) => s += build(c)}
   }
 
 }
