@@ -24,6 +24,7 @@ import play.api.Mode.Mode
 import play.api.http.Status
 import play.api.libs.json.{Format, JsError, Json}
 import play.api.{Configuration, Environment}
+import play.twirl.api.Html
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -70,4 +71,16 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
   def getWaitTime(formId: String)(implicit hc: HeaderCarrier): Future[String] =
     httpClient.GET[WaitTimeResponse](s"${twoWayMessageBaseUrl}/two-way-message/message/admin/$formId/response-time")
       .map(e => e.responseTime)
+
+  def getLatestMessage(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    httpClient.GET(s"${twoWayMessageBaseUrl}/two-way-message/messages/$messageId/latest-message")
+      .map { response => Some(Html(response.body)) }
+
+  }
+
+  def getPreviousMessages(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    httpClient.GET(s"${twoWayMessageBaseUrl}/two-way-message/messages/$messageId/previous-messages")
+      .map { response => Some(Html(response.body)) }
+  }
+
 }

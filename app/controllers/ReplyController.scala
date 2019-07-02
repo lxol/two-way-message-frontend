@@ -48,12 +48,9 @@ class ReplyController @Inject()(appConfig: AppConfig,
     implicit request =>
       authorised(Enrolment("HMRC-NI")) {
           for {
-             messages <- twoWayMessageConnector.getMessages(replyTo)
-             (before, after) = messages.reverse.headOption
-                 .fold((Html(""), Html(""))){m =>
-                     (messageRenderer.renderMessage(m),
-                                       messageRenderer.renderMessages(messages.reverse.tail))}
-          } yield {Ok(reply(queue, replyTo, appConfig, form, ReplyDetails(""),before, after)) }
+             before <- twoWayMessageConnector.getLatestMessage(replyTo)
+             after <- twoWayMessageConnector.getPreviousMessages(replyTo)
+          } yield {Ok(reply(queue, replyTo, appConfig, form, ReplyDetails(""),before.getOrElse(Html("")), after.getOrElse(Html("")))) }
       }
   }
 
@@ -64,12 +61,9 @@ class ReplyController @Inject()(appConfig: AppConfig,
           (formWithErrors: Form[ReplyDetails]) => {
             val returnedErrorForm = formWithErrors
               for {
-                  messages <- twoWayMessageConnector.getMessages(replyTo)
-                  (before, after) = messages.reverse.headOption
-                      .fold((Html(""), Html(""))){m =>
-                          (messageRenderer.renderMessage(m),
-                              messageRenderer.renderMessages(messages.reverse.tail))}
-              } yield BadRequest(reply(queueId, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors),before, after))
+                  before <- twoWayMessageConnector.getLatestMessage(replyTo)
+                  after <- twoWayMessageConnector.getPreviousMessages(replyTo)
+              } yield BadRequest(reply(queueId, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors),before.getOrElse(Html("")), after.getOrElse(Html(""))))
           },
           replyDetails =>
             submitMessage(queueId,replyDetails,replyTo)
