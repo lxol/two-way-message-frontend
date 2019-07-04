@@ -74,7 +74,7 @@ object HTMLEncoder {
     new String(Base64.encodeBase64String(text.getBytes("UTF-8")))
 
   private def splitParas(text: String): Seq[String] = {
-    text.split("[\\n]{2,}")
+    text.replaceAll("\r","").split("[\\n]{2,}")
   }
 
   private def text2XML(text: String):Seq[Node] = {
@@ -84,7 +84,6 @@ object HTMLEncoder {
       case '>' => Text(">")
       case '&' => Text("&")
       case '\n' => <br/>
-      case '\r' => Text("")
       case c =>  Text(c.toString)
     }
 
