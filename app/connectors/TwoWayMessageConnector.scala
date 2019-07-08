@@ -73,13 +73,13 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
       .map(e => e.responseTime)
 
   def getLatestMessage(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"${twoWayMessageBaseUrl}/two-way-message/messages/$messageId/latest-message")
+    httpClient.GET(s"${twoWayMessageBaseUrl}/messages/$messageId/latest-message")
       .map { response => Some(Html(response.body)) }
 
   }
 
   def getPreviousMessages(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"${twoWayMessageBaseUrl}/two-way-message/messages/$messageId/previous-messages")
+    httpClient.GET(s"${twoWayMessageBaseUrl}/messages/$messageId/previous-messages")
       .map { response => Some(Html(response.body)) }
   }
 
