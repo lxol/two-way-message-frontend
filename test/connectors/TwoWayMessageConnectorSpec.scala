@@ -32,6 +32,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{Json, Writes}
 import play.api.{Application, Mode}
 import play.mvc.Http
+import play.twirl.api.Html
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
@@ -197,6 +198,59 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
         .thenReturn(Future.failed(new Exception(testMessage)))
 
       ScalaFutures.whenReady(twoWayMessageConnector.getMessages(messageId).failed) { ex =>
+        ex shouldBe a[Exception]
+        ex.getMessage should be(testMessage)
+      }
+    }
+  }
+  "twoWayMessageConnector.getLatestMessage" should {
+
+    "respond with  a latest messages if valid input from 2wsm" in {
+      val messageId = "1234567890"
+      val messageStr = "top message rendered"
+      when(mockHttpClient.GET(endsWith(s"/messages/${messageId}/latest-message"))
+        (rds = any[HttpReads[HttpResponse]], hc = any[HeaderCarrier], ec = any[ExecutionContext]))
+        .thenReturn(Future.successful(HttpResponse(200, None, Map.empty, Some(messageStr))))
+
+      val result:Option[Html] = await(twoWayMessageConnector.getLatestMessage(messageId))
+      result shouldBe(Some(Html(messageStr)))
+    }
+
+    "forward an exception from 2wsm" in {
+      val messageId = "1234567890"
+      val testMessage = "test exception"
+      when(mockHttpClient.GET(endsWith(s"/messages/${messageId}/latest-message"))
+        (rds = any[HttpReads[HttpResponse]], hc = any[HeaderCarrier], ec = any[ExecutionContext]))
+        .thenReturn(Future.failed(new Exception(testMessage)))
+
+      ScalaFutures.whenReady(twoWayMessageConnector.getLatestMessage(messageId).failed) { ex =>
+        ex shouldBe a[Exception]
+        ex.getMessage should be(testMessage)
+      }
+    }
+  }
+
+  "twoWayMessageConnector.getPreviousMessages" should {
+
+    "respond with  a latest messages if valid input from 2wsm" in {
+      val messageId = "1234567890"
+      val messageStr = "rest of the messages rendered"
+      when(mockHttpClient.GET(endsWith(s"/messages/${messageId}/previous-messages"))
+        (rds = any[HttpReads[HttpResponse]], hc = any[HeaderCarrier], ec = any[ExecutionContext]))
+        .thenReturn(Future.successful(HttpResponse(200, None, Map.empty, Some(messageStr))))
+
+      val result:Option[Html] = await(twoWayMessageConnector.getPreviousMessages(messageId))
+      result shouldBe(Some(Html(messageStr)))
+    }
+
+    "forward an exception from 2wsm" in {
+      val messageId = "1234567890"
+      val testMessage = "test exception"
+      when(mockHttpClient.GET(endsWith(s"/messages/${messageId}/previous-messages"))
+        (rds = any[HttpReads[HttpResponse]], hc = any[HeaderCarrier], ec = any[ExecutionContext]))
+        .thenReturn(Future.failed(new Exception(testMessage)))
+
+      ScalaFutures.whenReady(twoWayMessageConnector.getPreviousMessages(messageId).failed) { ex =>
         ex shouldBe a[Exception]
         ex.getMessage should be(testMessage)
       }
