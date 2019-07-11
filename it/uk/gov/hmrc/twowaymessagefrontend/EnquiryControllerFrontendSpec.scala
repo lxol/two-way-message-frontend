@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.twowaymessagefrontend
 
-
 import com.google.inject.AbstractModule
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import controllers.EnquiryController
@@ -29,14 +28,16 @@ import org.openqa.selenium.JavascriptExecutor
 import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerSuite}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{Json, Reads}
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
+import play.twirl.api.Html
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.twowaymessagefrontend.util.{ControllerSpecBase, MockAuthConnector}
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.FakeRequest
+
 import scala.concurrent.Future
 
 class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthConnector with HtmlUnitFactory with   OneBrowserPerSuite{
@@ -125,12 +126,23 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
 
       val enquiryDetails = EnquiryDetails("p800", "A question", "A question from the customer", "test@dummy.com")
-      when(twoWayMessageConnector.postReplyMessage( ArgumentMatchers.any(), ArgumentMatchers.eq("p800"), ArgumentMatchers.eq("5c8a31931d00000b00a30bdc"))(ArgumentMatchers.any[HeaderCarrier])).thenReturn {
-        val x = Json.parse( """{ "id":"5c18eb166f0000110204b160" }""".stripMargin )
+      when(twoWayMessageConnector.postReplyMessage( ArgumentMatchers.any(), ArgumentMatchers.eq("p800"), ArgumentMatchers.eq("5c18eb166f0000110204b162"))(ArgumentMatchers.any[HeaderCarrier])).thenReturn {
+        val x = Json.parse( """{ "id":"5c18eb166f0000110204b162" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800/5c8a31931d00000b00a30bdc/reply"
+      when(twoWayMessageConnector.getWaitTime(ArgumentMatchers.eq("p800"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful("7 days")
+      }
+
+      when(twoWayMessageConnector.getLatestMessage(ArgumentMatchers.eq("5c18eb166f0000110204b162"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful(Some(Html("latest")))
+      }
+
+      when(twoWayMessageConnector.getPreviousMessages(ArgumentMatchers.eq("5c18eb166f0000110204b162"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful(Some(Html("previous")))
+      }
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800/5c18eb166f0000110204b162/reply"
 
       textArea("reply-input").value = "A question from the customer"
 
@@ -239,7 +251,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
     }
   }
 
-  import play.api.test.Helpers.{GET, contentAsString, route}
+  import play.api.test.Helpers.{GET, contentAsString}
 
   "back link" should {
     "go back to previous page when no parameter is passed" in {

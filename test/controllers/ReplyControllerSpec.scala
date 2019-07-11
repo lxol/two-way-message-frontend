@@ -53,6 +53,8 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
   when(mockMessageRenderer.renderMessages(any())).thenReturn(Html(""))
   when(mockTwoWayMessageConnector.getMessages(any())(any())).thenReturn(List[ConversationItem]())
   when(mockTwoWayMessageConnector.getWaitTime(any[String])(any[HeaderCarrier])).thenReturn(Future.successful(timeResponse))
+  when(mockTwoWayMessageConnector.getLatestMessage(any())(any())).thenReturn(Some(Html("")))
+  when(mockTwoWayMessageConnector.getPreviousMessages(any())(any())).thenReturn(Some(Html("")))
 
   override def fakeApplication(): Application = {
 

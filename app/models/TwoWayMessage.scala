@@ -20,12 +20,13 @@ import org.apache.commons.codec.binary.Base64
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, Writes, _}
 
+import scala.xml.{Node, NodeBuffer, Text}
 
 case class ContactDetails(email: String)
 
 object ContactDetails {
 
-  implicit val format = Json.format[ContactDetails]
+  implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 
 case class TwoWayMessage(contactDetails: ContactDetails, subject: String, content: String, replyTo: Option[String] = None)
@@ -38,24 +39,57 @@ object TwoWayMessage {
       (__ \ "content").write[String] and
       (__ \ "replyTo").writeNullable[String]
     ) ((m: TwoWayMessage) =>
-      (m.contactDetails, m.subject, new String(Base64.encodeBase64String(m.content.getBytes("UTF-8"))), m.replyTo))
+    (m.contactDetails, m.subject, HTMLEncoder.encode(m.content), m.replyTo) )
 }
 
 case class TwoWayMessageReply(content: String)
 
 object TwoWayMessageReply {
      implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
-     (( JsPath \ "content").write[String]).contramap((m: TwoWayMessageReply) => (new String(Base64.encodeBase64String(m.content.getBytes("UTF-8")))))
+     ( JsPath \ "content").write[String].contramap((m: TwoWayMessageReply) => HTMLEncoder.encode(m.content))
 }
 
 case class Identifier(id: String)
 
 object Identifier {
 
-  implicit val id = Json.reads[Identifier]
+  implicit val id: Reads[Identifier] = Json.reads[Identifier]
 }
 
 case class MessageError(text: String)
 
+
+object HTMLEncoder {
+
+  def encode(text:String): String = {
+
+    val xhtml = splitParas(text).map{para =>
+      <p>{text2XML(para)}</p>
+    }
+    val xhtmlText = xhtml.mkString
+    base64Encode(xhtmlText)
+  }
+
+  private def base64Encode(text: String): String =
+    new String(Base64.encodeBase64String(text.getBytes("UTF-8")))
+
+  private def splitParas(text: String): Seq[String] = {
+    text.replaceAll("\r","").split("[\\n]{2,}")
+  }
+
+  private def text2XML(text: String):Seq[Node] = {
+
+    def build(c: Char):Node = c match {
+      case '<' => Text("<")
+      case '>' => Text(">")
+      case '&' => Text("&")
+      case '\n' => <br/>
+      case c =>  Text(c.toString)
+    }
+
+    text.foldLeft[NodeBuffer](new NodeBuffer()){ (s,c) => s += build(c)}
+  }
+
+}
 
 
