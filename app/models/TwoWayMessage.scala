@@ -19,6 +19,7 @@ package models
 import org.apache.commons.codec.binary.Base64
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, Writes, _}
+import play.twirl.api.HtmlFormat
 
 import scala.xml.{Node, NodeBuffer, Text}
 
@@ -39,7 +40,7 @@ object TwoWayMessage {
       (__ \ "content").write[String] and
       (__ \ "replyTo").writeNullable[String]
     ) ((m: TwoWayMessage) =>
-    (m.contactDetails, m.subject, HTMLEncoder.encode(m.content), m.replyTo) )
+    (m.contactDetails, HtmlFormat.escape(m.subject).body, HTMLEncoder.encode(m.content), m.replyTo) )
 }
 
 case class TwoWayMessageReply(content: String)
@@ -84,7 +85,7 @@ object HTMLEncoder {
       case '>' => Text(">")
       case '&' => Text("&")
       case '\n' => <br/>
-      case c =>  Text(c.toString)
+      case _ =>  Text(c.toString)
     }
 
     text.foldLeft[NodeBuffer](new NodeBuffer()){ (s,c) => s += build(c)}

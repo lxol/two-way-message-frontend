@@ -21,6 +21,27 @@ import org.scalatest.FunSuite
 import play.api.libs.json.{Json, _}
 
 class TwoWayMessageSpec extends FunSuite {
+
+  import models.TwoWayMessage._
+
+  val expectedJson = Json.parse(
+    """
+      |{
+      | "contactDetails":
+      | {
+      |   "email":"test@test.com"
+      | },
+      | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
+      | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
+      | }
+    """.stripMargin)
+
+  test("TwoWayMessage should escape HTML subject content correctly") {
+    val twoWayMessage = TwoWayMessage(ContactDetails("test@test.com"),"<b>Hello & World</b>","Some content",None)
+    val json = Json.toJson(twoWayMessage)
+    assert(json === expectedJson)
+  }
+
   import models.TwoWayMessageReply._
 
   test("TwoWayMessageReply should create json correctly") {
