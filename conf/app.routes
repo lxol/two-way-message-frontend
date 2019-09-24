@@ -12,3 +12,4 @@ GET     /messages/personal-account                      controllers.EnquiryContr
 POST    /message/customer/:queueId/:replyTo/reply       controllers.ReplyController.onSubmit(queueId, replyTo)
 GET     /message/customer/:queueId/:replyTo/reply       controllers.ReplyController.onPageLoad(queueId, replyTo)
 
+GET     /accessibility-statement                        controllers.AccessibilityStatementController.show
