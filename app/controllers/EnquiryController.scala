@@ -16,8 +16,6 @@
 
 package controllers
 
-import java.util.concurrent.TimeUnit
-
 import config.AppConfig
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import forms.EnquiryFormProvider
@@ -28,13 +26,10 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
 import play.api.mvc.{Action, AnyContent, Request}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import views.html.{enquiry, enquiry_submitted, error_template}
-
 import scala.concurrent.{ExecutionContext, Future}
 import models.{EnquiryDetails, Identifier, MessageError}
-import org.omg.PortableInterceptor.SUCCESSFUL
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-
+import uk.gov.hmrc.http.{HttpResponse}
 import ExecutionContext.Implicits.global
 
 @Singleton
