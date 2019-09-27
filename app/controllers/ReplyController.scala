@@ -23,7 +23,7 @@ import javax.inject.{Inject, Singleton}
 import models.{Identifier, MessageError, ReplyDetails}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, Request}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
 import uk.gov.hmrc.http.HttpResponse
@@ -32,6 +32,7 @@ import utils.MessageRenderer
 import views.html.{enquiry_submitted, error_template, reply}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
 class ReplyController @Inject()(appConfig: AppConfig,
@@ -44,17 +45,17 @@ class ReplyController @Inject()(appConfig: AppConfig,
 
   val form: Form[ReplyDetails] = formProvider()
 
-  def onPageLoad(queue: String, replyTo: String): Action[AnyContent] = Action.async {
+  def onPageLoad(enquiryType: String, replyTo: String): Action[AnyContent] = Action.async {
     implicit request =>
     authorised(Enrolment("HMRC-NI")) {
       for {
         before <- twoWayMessageConnector.getLatestMessage(replyTo)
         after <- twoWayMessageConnector.getPreviousMessages(replyTo)
-      } yield {Ok(reply(queue, replyTo, appConfig, form, ReplyDetails(""),before.getOrElse(Html("")), after.getOrElse(Html("")))) }
+      } yield {Ok(reply(enquiryType, replyTo, appConfig, form, ReplyDetails(""),before.getOrElse(Html("")), after.getOrElse(Html("")))) }
     }
   }
 
-  def onSubmit(queueId: String, replyTo: String): Action[AnyContent] = Action.async {
+  def onSubmit(enquiryType: String, replyTo: String): Action[AnyContent] = Action.async {
     implicit request =>
     authorised(Enrolment("HMRC-NI")) {
       form.bindFromRequest().fold(
@@ -63,26 +64,28 @@ class ReplyController @Inject()(appConfig: AppConfig,
           for {
             before <- twoWayMessageConnector.getLatestMessage(replyTo)
             after <- twoWayMessageConnector.getPreviousMessages(replyTo)
-          } yield BadRequest(reply(queueId, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors),before.getOrElse(Html("")), after.getOrElse(Html(""))))
+          } yield BadRequest(reply(
+              enquiryType, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors),before.getOrElse(Html("")), after.getOrElse(Html(""))))
         },
         replyDetails =>
-        submitMessage(queueId,replyDetails,replyTo)
+        submitMessage(enquiryType,replyDetails,replyTo)
       )
     }
   }
 
-  def submitMessage(queueId: String, replyDetails: ReplyDetails, replyTo: String)(implicit request: Request[_]) = {
-    for {
-      waitTime <- twoWayMessageConnector.getWaitTime(queueId)
-      response <- twoWayMessageConnector.postReplyMessage(replyDetails, queueId, replyTo)
-    } yield {
-      response.status match {
-        case CREATED => extractId(response) match {
-          case Right(id) => Ok(enquiry_submitted(appConfig, id.id, waitTime))
-          case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
+  def submitMessage(enquiryType: String, replyDetails: ReplyDetails, replyTo: String)(implicit request: Request[_]): Future[Result] = {
+    twoWayMessageConnector.getSubmissionDetails(enquiryType).flatMap {
+      case Some(details) =>
+        twoWayMessageConnector.postReplyMessage(replyDetails, enquiryType, replyTo).flatMap { response =>
+          response.status match {
+            case CREATED => extractId(response) match {
+              case Right(id) => Future.successful(Ok(enquiry_submitted(appConfig, id.id, details.responseTime)))
+              case Left(error) => Future.successful(Ok(error_template("Error", "There was an error:", error.text, appConfig)))
+            }
+            case _ => Future.successful(Ok(error_template("Error", "There was an error:", "Error sending reply details", appConfig)))
+          }
         }
-        case _ => Ok(error_template("Error", "There was an error:", "Error sending reply details", appConfig))
-      }
+      case None => Future.successful(Ok(error_template("Error", "There was an error:", s"Unknown enquiry type: $enquiryType", appConfig)))
     }
   }
 

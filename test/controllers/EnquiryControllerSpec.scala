@@ -19,7 +19,7 @@ package controllers
 import com.google.inject.AbstractModule
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import connectors.mocks.MockAuthConnector
-import models.{EnquiryDetails, Identifier, MessageError}
+import models.{EnquiryDetails, Identifier, MessageError, SubmissionDetails}
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import play.api.Application
@@ -41,9 +41,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import play.api.{Configuration, Environment}
-
 import play.api.i18n.{I18nSupport, MessagesApi}
 import config.FrontendAppConfig
 
@@ -64,7 +62,8 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       })
       .build()
   }
-  when(mockTwoWayMessageConnector.getWaitTime(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("7 days"))
+  when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
+    Future.successful(Some(SubmissionDetails("P800 overpayment enquiry","7 days"))))
   when(mockPreferencesConnector.getPreferredEmail(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("preferredEmail@test.com"))
 
   val controller = injector.instanceOf[EnquiryController]
@@ -97,7 +96,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       val nino = Nino("AB123456C")
       when(mockPreferencesConnector.getPreferredEmail(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("preferredEmail@test.com"))
       mockAuthorise(Enrolment("HMRC-NI"), Retrievals.nino)(Future.successful(Some(nino.value)))
-      val result = call(controller.onPageLoad("P800"), fakeRequest)
+      val result = call(controller.onPageLoad("p800-overpayment"), fakeRequest)
 
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
@@ -109,14 +108,14 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
   "calling onSubmit()" should {
     val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit())
     val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-      "queue" -> "queue1",
+      "enquiryType" -> "some-enquiry-type",
       "subject" -> "subject",
       "question" -> "question",
       "email" -> "test@test.com"
     )
 
     val enquiryDetails = EnquiryDetails(
-      "queue1",
+      "some-enquiry-type",
       "subject",
       "question",
       "test@test.com"
@@ -124,7 +123,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
       "bad" -> "value",
-      "queue" -> "This will always be present"
+      "enquiryType" -> "This will always be present"
     )
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
@@ -185,18 +184,18 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
   "validation should" should {
     val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit())
 
-    "Successfull" in {
+    "Successful" in {
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
 
       val matchingEmails: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-        "queue" -> "queue1",
+        "enquiryType" -> "some-enquiry-type",
         "subject" -> "subject",
         "question" -> "question",
         "email" -> "test@test.com"
       )
       val enquiryDetails = EnquiryDetails(
-        "queue1",
+        "some-enquiry-type",
         "subject",
         "question",
         "test@test.com"
@@ -217,7 +216,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
 
       val nonMatchingEmails: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-        "queue" -> "queue1",
+        "enquiryType" -> "some-enquiry-type",
         "subject" -> "a" * 66,
         "question" -> "test",
         "email" -> "test@test.com"

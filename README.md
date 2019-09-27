@@ -1,7 +1,18 @@
 
 # two-way-message-frontend
 
-This is a placeholder README.md for a new repository
+## API
+| Path                                                | Method | Description                                  |
+|:----------------------------------------------------|:-------|----------------------------------------------|
+| ```/messages/personal-account```                    | GET    | Redirect to PTA home                         |  
+| ```/messages```                                     | GET    | Redirect to PTA messages                     |
+| ```/message/:enquiryType/make_enquiry```            | GET    | Displays the 2-way message input form        |
+| ```/message/submit```                               | POST   | Sends a customer 2-way message to HMRC       |
+| ```/message/customer/:enquiryType/:replyTo/reply``` | GET    | Displays the 2-way message reply input form  | 
+| ```/message/customer/:enquiryType/:replyTo/reply``` | POST   | Sends a customer 2-way message reply to HMRC |
+--------------------------------------------------------------------------------------------------------------- 
+ 
+
 
 ### License
 

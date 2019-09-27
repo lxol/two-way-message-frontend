@@ -19,7 +19,7 @@
 @import controllers.routes._
 @import models.EnquiryDetails
 
-@(appConfig: AppConfig, form: Form[_], defaultEnquiryDetails: EnquiryDetails, waitTime: String)(implicit request: Request[_], messages: Messages)
+@(appConfig: AppConfig, form: Form[_], defaultEnquiryDetails: EnquiryDetails, responseTime: String)(implicit request: Request[_], messages: Messages)
 
 @main_template(
     title = messages("enquiry.title"),
@@ -32,11 +32,11 @@
 
     @components.heading("enquiry.heading", "enquiry-heading")
 
-    <p class="indent">Our team will reply within @waitTime</p>
+    <p class="indent">Our team will reply within @responseTime</p>
 
     @helpers.form(action = EnquiryController.onSubmit(), 'autoComplete -> "off", 'novalidate -> "off"){
 
-        <input type="hidden" id='@{form("queue").id}' name='@{form("queue").name}' value="@{defaultEnquiryDetails.queue}">
+        <input type="hidden" id='@{form("enquiryType").id}' name='@{form("enquiryType").name}' value="@{defaultEnquiryDetails.enquiryType}">
 
         @components.input_text(
             field = form("subject"),

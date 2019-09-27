@@ -31,7 +31,7 @@ class EnquiryFormProvider @Inject()( messagesApi: MessagesApi)   {
   def apply(): Form[EnquiryDetails] =
     Form(
       mapping(
-        "queue" -> nonEmptyText,
+        "enquiryType" -> nonEmptyText,
         "subject" -> nonEmptyTextWithError("Enter a subject").verifying( subjectConstraint),
         "question" -> nonEmptyTextWithError("Enter a question").verifying( contentConstraint),
         "email" -> email

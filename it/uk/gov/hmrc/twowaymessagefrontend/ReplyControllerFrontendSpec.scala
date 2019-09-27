@@ -20,7 +20,7 @@ package uk.gov.hmrc.twowaymessagefrontend
 import com.google.inject.AbstractModule
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import controllers.ReplyController
-import models.ReplyDetails
+import models.{ReplyDetails, SubmissionDetails}
 import net.codingwell.scalaguice.ScalaModule
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
@@ -35,6 +35,7 @@ import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.twowaymessagefrontend.util.{ControllerSpecBase, MockAuthConnector}
 import play.twirl.api.Html
+
 import scala.concurrent.Future
 
 class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConnector with HtmlUnitFactory with   OneBrowserPerSuite{
@@ -63,8 +64,8 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "find the home page ok" in {
       mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some("AB123456C")))
-      when(twoWayMessageConnector.getWaitTime(ArgumentMatchers.eq("p800"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
-        Future.successful("7 days")
+      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("p800-overpayment"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful(Some(SubmissionDetails("P800 overpayment enquiry","5 days")))
       }
       when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("5c18eb166f0000110204b160") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
@@ -76,25 +77,18 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
       when(twoWayMessageConnector.getPreviousMessages(ArgumentMatchers.eq("5c18eb166f0000110204b160"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
         Future.successful(Some(Html("previous")))
       }
-      val result = await(call(replyController.onPageLoad("p800", "5c18eb166f0000110204b160"), fakeRequest))
+      val result = await(call(replyController.onPageLoad("p800-overpayment", "5c18eb166f0000110204b160"), fakeRequest))
       result.header.status mustBe (200)
     }
 
-    "Send a valid message" in {
+    "Send a valid reply message" in {
       import org.mockito.Mockito._
+
+      val enquiryType = "p800-overpayment"
 
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some("AB123456C")))
 
       val replyDetails = ReplyDetails("A question from the customer")
-      when(twoWayMessageConnector.postReplyMessage( ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq("p800"), ArgumentMatchers.eq("5c18eb166f0000110204b161") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
-        val x = Json.parse( """{ "id":"5c18eb166f0000110204b161" }""".stripMargin )
-
-        Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
-      }
-
-      when(twoWayMessageConnector.getWaitTime(ArgumentMatchers.eq("p800"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
-        Future.successful("7 days")
-      }
 
       when(twoWayMessageConnector.getLatestMessage(ArgumentMatchers.eq("5c18eb166f0000110204b161"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
         Future.successful(Some(Html("latest")))
@@ -104,7 +98,18 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(Some(Html("previous")))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800/5c18eb166f0000110204b161/reply#reply-input"
+      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq(enquiryType))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        Future.successful(Some(SubmissionDetails("P800 overpayment enquiry","5 days")))
+      }
+
+      when(twoWayMessageConnector.postReplyMessage( ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType),
+        ArgumentMatchers.eq("5c18eb166f0000110204b161") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+        val x = Json.parse( """{ "id":"5c18eb166f0000110204b161" }""".stripMargin )
+
+        Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
+      }
+
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b161/reply#reply-input"
 
       textArea("reply-input").value = "A question from the customer"
 

@@ -19,7 +19,7 @@
 @import controllers.routes._
 @import models.ReplyDetails
 
-@(queueId: String, replyTo: String, appConfig: AppConfig, form: Form[_], defaultReplyDetails: ReplyDetails, before: Html, after: Html)(implicit request: Request[_], messages: Messages)
+@(enquiryType: String, replyTo: String, appConfig: AppConfig, form: Form[_], defaultReplyDetails: ReplyDetails, before: Html, after: Html)(implicit request: Request[_], messages: Messages)
 
 @main_template(
     title = messages("reply.title"),
@@ -33,7 +33,7 @@
     @components.heading("reply.heading", "reply-heading")
 
     @before
-    @helpers.form(action = ReplyController.onSubmit(queueId, replyTo), 'autoComplete -> "off", 'novalidate -> "off") {
+    @helpers.form(action = ReplyController.onSubmit(enquiryType, replyTo), 'autoComplete -> "off", 'novalidate -> "off") {
 
         @components.input_textarea(
             field = form("reply-input"),

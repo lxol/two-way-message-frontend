@@ -4,11 +4,11 @@ GET     /assets/*file                                   controllers.Assets.versi
 
 GET     /language/:lang                                 controllers.LanguageSwitchController.switchToLanguage(lang: String)
 
-GET     /message/:queue/make_enquiry                    controllers.EnquiryController.onPageLoad(queue: String)
+GET     /message/:enquiryType/make_enquiry              controllers.EnquiryController.onPageLoad(enquiryType: String)
 POST    /message/submit                                 controllers.EnquiryController.onSubmit()
 GET     /messages                                       controllers.EnquiryController.messagesRedirect()
 GET     /messages/personal-account                      controllers.EnquiryController.personalAccountRedirect()
 
-POST    /message/customer/:queueId/:replyTo/reply       controllers.ReplyController.onSubmit(queueId, replyTo)
-GET     /message/customer/:queueId/:replyTo/reply       controllers.ReplyController.onPageLoad(queueId, replyTo)
+POST    /message/customer/:enquiryType/:replyTo/reply   controllers.ReplyController.onSubmit(enquiryType, replyTo)
+GET     /message/customer/:enquiryType/:replyTo/reply   controllers.ReplyController.onPageLoad(enquiryType, replyTo)
 

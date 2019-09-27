@@ -45,40 +45,43 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
       details.subject,
       details.question
     )
-    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/${details.queue}/submit", message)
+    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/${details.enquiryType}/submit", message)
   }
 
-  def postReplyMessage(details: ReplyDetails, queueId: String, replyTo: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def postReplyMessage(details: ReplyDetails, enquiryType: String, replyTo: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessageReply(
       details.content
     )
-    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/$queueId/$replyTo/reply", message)
+    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/$enquiryType/$replyTo/reply", message)
   }
 
   def getMessages(messageId: String)(implicit hc: HeaderCarrier): Future[List[ConversationItem]] =
-    httpClient.GET(s"${twoWayMessageBaseUrl}/two-way-message/message/messages-list/$messageId")
+    httpClient.GET(s"$twoWayMessageBaseUrl/two-way-message/message/messages-list/$messageId")
       .flatMap {
         response => response.json.validate[List[ConversationItem]].fold(
           errors => Future.failed(new Exception(Json stringify JsError.toJson(errors))),
           msgList => Future.successful(msgList))
       }
 
-  implicit val waitTimeResponseJson: Format[WaitTimeResponse] = Json.format[WaitTimeResponse]
-
-  case class WaitTimeResponse(responseTime: String)
-
-  def getWaitTime(formId: String)(implicit hc: HeaderCarrier): Future[String] =
-    httpClient.GET[WaitTimeResponse](s"${twoWayMessageBaseUrl}/two-way-message/message/admin/$formId/response-time")
-      .map(e => e.responseTime)
+  def getSubmissionDetails(enquiryType: String)(implicit hc: HeaderCarrier): Future[Option[SubmissionDetails]] = {
+    httpClient.GET(s"$twoWayMessageBaseUrl/two-way-message/message/admin/$enquiryType/details")
+      .flatMap { response =>
+        response.status match {
+          case OK =>
+            val details = Json.parse(response.body).validate[SubmissionDetails]
+            Future.successful(details.asOpt)
+          case _ => Future.successful(None)
+        }
+      }
+  }
 
   def getLatestMessage(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"${twoWayMessageBaseUrl}/messages/$messageId/latest-message")
+    httpClient.GET(s"$twoWayMessageBaseUrl/messages/$messageId/latest-message")
       .map { response => Some(Html(response.body)) }
-
   }
 
   def getPreviousMessages(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"${twoWayMessageBaseUrl}/messages/$messageId/previous-messages")
+    httpClient.GET(s"$twoWayMessageBaseUrl/messages/$messageId/previous-messages")
       .map { response => Some(Html(response.body)) }
   }
 

@@ -23,13 +23,15 @@ import javax.inject.{Inject, Singleton}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
-import play.api.mvc.{Action, AnyContent, Request}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import views.html.{enquiry, enquiry_submitted, error_template}
+
 import scala.concurrent.{ExecutionContext, Future}
 import models.{EnquiryDetails, Identifier, MessageError}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.{HttpResponse}
+import uk.gov.hmrc.http.HttpResponse
+
 import ExecutionContext.Implicits.global
 
 @Singleton
@@ -43,15 +45,18 @@ class EnquiryController @Inject()(appConfig: AppConfig,
 
   val form: Form[EnquiryDetails] = formProvider()
 
-  def onPageLoad(queue: String): Action[AnyContent] = Action.async {
+  def onPageLoad(enquiryType: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised(Enrolment("HMRC-NI")).retrieve(Retrievals.nino) {
         case Some(nino) =>
           for {
-            waitTime <- twoWayMessageConnector.getWaitTime(queue)
+            submissionDetails <- twoWayMessageConnector.getSubmissionDetails(enquiryType)
             email <- preferencesConnector.getPreferredEmail(nino)
           } yield {
-            Ok(enquiry(appConfig, form, EnquiryDetails(queue, "", "", email), waitTime))
+            submissionDetails match {
+              case Some(details) => Ok(enquiry(appConfig, form, EnquiryDetails(enquiryType, "", "", email), details.responseTime))
+              case None => NotFound
+            }
           }
         case _ => Future.successful(Forbidden)
       } recoverWith {
@@ -62,35 +67,36 @@ class EnquiryController @Inject()(appConfig: AppConfig,
   def onSubmit(): Action[AnyContent] = Action.async {
     implicit request =>
       authorised(Enrolment("HMRC-NI")) {
-        val queue = form.bindFromRequest().data("queue")
-        twoWayMessageConnector.getWaitTime(queue).flatMap(waitTime =>
-          form.bindFromRequest().fold(
-            (formWithErrors: Form[EnquiryDetails]) => {
-              Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors), waitTime)))
-            },
-            enquiryDetails => {
-              submitMessage(enquiryDetails, waitTime)
-            }
-          )
-        )
+        val enquiryType = form.bindFromRequest().data("enquiryType")
+        twoWayMessageConnector.getSubmissionDetails(enquiryType).flatMap {
+          case Some(details) =>
+            form.bindFromRequest().fold(
+              (formWithErrors: Form[EnquiryDetails]) => {
+                Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors), details.responseTime)))
+              },
+              enquiryDetails => {
+                submitMessage(enquiryDetails, details.responseTime)
+              })
+          case None => Future.successful(Ok(error_template("Error", "There was an error:", s"Unknown enquiry type: $enquiryType", appConfig)))
+        }
       }
   }
 
-  def submitMessage(enquiryDetails: EnquiryDetails, waitTime: String)(implicit request: Request[_]) = {
+  def submitMessage(enquiryDetails: EnquiryDetails, responseTime: String)(implicit request: Request[_]): Future[Result] = {
       twoWayMessageConnector.postMessage(enquiryDetails).map(response => response.status match {
         case CREATED => extractId(response) match {
-          case Right(id) => Ok(enquiry_submitted(appConfig, id.id, waitTime))
+          case Right(id) => Ok(enquiry_submitted(appConfig, id.id, responseTime))
           case Left(error) => Ok(error_template("Error", "There was an error:", error.text, appConfig))
         }
         case _ => Ok(error_template("Error", "There was an error:", "Error sending enquiry details", appConfig))
       })
   }
 
-  def messagesRedirect = Action {
+  def messagesRedirect: Action[AnyContent] = Action {
     Redirect(appConfig.messagesFrontendUrl)
   }
 
-  def personalAccountRedirect = Action {
+  def personalAccountRedirect: Action[AnyContent] = Action {
     Redirect(appConfig.personalAccountUrl)
   }
 
@@ -103,7 +109,7 @@ class EnquiryController @Inject()(appConfig: AppConfig,
 
   private def rebuildFailedForm(formWithErrors: Form[EnquiryDetails]) = {
       EnquiryDetails(
-        formWithErrors.data.getOrElse("queue", ""),
+        formWithErrors.data.getOrElse("enquiryType", ""),
         formWithErrors.data.getOrElse("subject", ""),
         formWithErrors.data.getOrElse("question", ""),
         formWithErrors.data.getOrElse("email", ""))

@@ -19,7 +19,7 @@ package controllers
 import com.google.inject.AbstractModule
 import connectors.TwoWayMessageConnector
 import connectors.mocks.MockAuthConnector
-import models.{Identifier, MessageError, ConversationItem, ReplyDetails}
+import models.{ConversationItem, Identifier, MessageError, ReplyDetails, SubmissionDetails}
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import play.api.Application
@@ -47,12 +47,12 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
   lazy val mockTwoWayMessageConnector = mock[TwoWayMessageConnector]
   lazy val mockMessageRenderer = mock[MessageRenderer]
-  lazy val timeResponse = "7 days"
+  lazy val submissionDetailsResponse = SubmissionDetails("P800 overpayment enquiry","7 days")
 
   when(mockMessageRenderer.renderMessage(any())).thenReturn(Html(""))
   when(mockMessageRenderer.renderMessages(any())).thenReturn(Html(""))
   when(mockTwoWayMessageConnector.getMessages(any())(any())).thenReturn(List[ConversationItem]())
-  when(mockTwoWayMessageConnector.getWaitTime(any[String])(any[HeaderCarrier])).thenReturn(Future.successful(timeResponse))
+  when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(Future.successful(Some(submissionDetailsResponse)))
   when(mockTwoWayMessageConnector.getLatestMessage(any())(any())).thenReturn(Some(Html("")))
   when(mockTwoWayMessageConnector.getPreviousMessages(any())(any())).thenReturn(Some(Html("")))
 
@@ -99,16 +99,16 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"), Retrievals.email)(Future.successful(Some(nino.value)))
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-      val result = call(controller.onPageLoad("P800", "messageid"), fakeRequest)
+      val result = call(controller.onPageLoad("p800-overpayment", "messageid"), fakeRequest)
       status(result) shouldBe Status.OK
     }
   }
 
   //Please see integration tests for auth failure scenarios as these are handled by the ErrorHandler class
   "calling onSubmit()" should {
-    val queueId = "p800"
+    val enquiryType = "p800-overpayment"
     val messageId = "543e92e101000001006300c9"
-    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(queueId, messageId))
+    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
     val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
       "reply-input" -> "test content"
     )
@@ -118,7 +118,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
       "bad" -> "value",
-      "queue" -> "This will always be present"
+      "enquiryType" -> "This will always be present"
     )
 
     val badRequestWithEmptyFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
@@ -134,13 +134,13 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(queueId), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
         )
       )
 
-      val result = await(call(controller.onSubmit(queueId, messageId), requestWithFormData))
+      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
       result.header.status shouldBe Status.OK
     }
 
@@ -148,26 +148,26 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
       val bad2wmPostMessageResponse = Json.parse("{}")
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(queueId), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CREATED, Some(bad2wmPostMessageResponse))
         )
       )
-      val result = await(call(controller.onSubmit(queueId, messageId), requestWithFormData))
+      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
       result.header.status shouldBe Status.OK
     }
 
     "return 400 (BAD_REQUEST) when presented with invalid form data" in {
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-      val result = call(controller.onSubmit(queueId, messageId), badRequestWithFormData)
+      val result = call(controller.onSubmit(enquiryType, messageId), badRequestWithFormData)
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 (BAD_REQUEST) when presented with empty form data" in {
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
-      val result = call(controller.onSubmit(queueId, messageId), badRequestWithEmptyFormData)
+      val result = call(controller.onSubmit(enquiryType, messageId), badRequestWithEmptyFormData)
       status(result) shouldBe Status.BAD_REQUEST
 
       val document = Jsoup.parse(contentAsString(result))
@@ -178,21 +178,21 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
       val nino = Nino("AB123456C")
       mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some(nino.value)))
 
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(queueId), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CONFLICT)
         )
       )
 
-      val result = await(call(controller.onSubmit(queueId, messageId), requestWithFormData))
+      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
       result.header.status shouldBe Status.OK
     }
   }
 
   "validation should" should {
-    val queueId = "p800"
+    val enquiryType = "p800-overpayment"
     val messageId = "543e92e101000001006300c9"
-    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(queueId, messageId))
+    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
 
     "Unsuccessful when subject is too long" in {
       val nino = Nino("AB123456C")
@@ -202,7 +202,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
         "reply-input" -> "a" * (100000 + 1)
       )
 
-      val result = await(call(controller.onSubmit(queueId, messageId), requestWithLongContent))
+      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithLongContent))
       result.header.status shouldBe Status.BAD_REQUEST
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByClass("error-summary-list").html() shouldBe "<li><a href=\"#reply-input\">Maximum length is 100,000</a></li>"

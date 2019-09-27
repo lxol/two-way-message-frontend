@@ -66,7 +66,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
         |    }""".stripMargin)
 
     val details = EnquiryDetails(
-      "queue",
+      "some-enquiry-type",
       "my subject",
       "my question",
       "email@test.com"
@@ -117,7 +117,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
         |    }""".stripMargin)
 
     val details = EnquiryDetails(
-      "queue",
+      "some-enquiry-type",
       "my subject",
       "my question",
       "email@test.com"
@@ -142,7 +142,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
           )
         )
 
-      val result = await(twoWayMessageConnector.postReplyMessage(ReplyDetails("Hello"), "p800", "e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"))
+      val result = await(twoWayMessageConnector.postReplyMessage(ReplyDetails("Hello"), "p800-overpayment", "e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"))
       result.status shouldBe Status.CREATED
     }
 
@@ -157,7 +157,8 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
           )
         )
 
-      val result = await(twoWayMessageConnector.postReplyMessage(ReplyDetails("Hello World"), "p800", "e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"))
+      val result = await(twoWayMessageConnector.postReplyMessage(
+        ReplyDetails("Hello World"), "p800-overpayment", "e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"))
       result.status shouldBe Status.GATEWAY_TIMEOUT
     }
 
