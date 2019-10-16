@@ -20,19 +20,18 @@ import config.AppConfig
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import forms.EnquiryFormProvider
 import javax.inject.{Inject, Singleton}
+import models.{EnquiryDetails, Identifier, MessageError}
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, Enrolment}
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, Enrolment}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import views.html.{enquiry, enquiry_submitted, error_template}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import models.{EnquiryDetails, Identifier, MessageError}
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.HttpResponse
-
-import ExecutionContext.Implicits.global
 
 @Singleton
 class EnquiryController @Inject()(appConfig: AppConfig,
@@ -60,6 +59,7 @@ class EnquiryController @Inject()(appConfig: AppConfig,
           }
         case _ => Future.successful(Forbidden)
       } recoverWith {
+        case _ : AuthorisationException => Future.successful(Unauthorized)
         case _ => Future.successful(InternalServerError)
       }
     }

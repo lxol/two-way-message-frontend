@@ -17,33 +17,30 @@
 package controllers
 
 import com.google.inject.AbstractModule
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
+import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
+import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import models.{EnquiryDetails, Identifier, MessageError, SubmissionDetails}
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
-import play.api.Application
-import play.api.http.Status
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.AnyContentAsFormUrlEncoded
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment}
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import play.api.http.Status
+import play.api.i18n.I18nSupport
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsFormUrlEncoded
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import play.api.{Application, Configuration, Environment}
 import play.mvc.Http
-import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, UnsupportedAffinityGroup}
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.{Configuration, Environment}
-import play.api.i18n.{I18nSupport, MessagesApi}
-import config.FrontendAppConfig
 
 class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector with I18nSupport {
 
@@ -101,6 +98,15 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByClass("heading-large").text().contains("Send your message") shouldBe true
+    }
+
+    "return 401 (unauthorised) when presented with a Nino that returns 401 from auth-client" in {
+      val nino = Nino("AB123456C")
+      when(mockPreferencesConnector.getPreferredEmail(any[String])(any[HeaderCarrier])).thenReturn(Future.successful("preferredEmail@test.com"))
+      mockAuthorise(Enrolment("HMRC-NI"), Retrievals.nino)(Future.failed(new UnsupportedAffinityGroup("")))
+      val result = call(controller.onPageLoad("p800-overpayment"), fakeRequest)
+
+      status(result) shouldBe Status.UNAUTHORIZED
     }
   }
 
