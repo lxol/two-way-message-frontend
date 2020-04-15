@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class SubmissionDetails(displayName: String, responseTime: String)
+case class SubmissionDetails(displayName: String, responseTime: String, taxIdName: String, taxId: String)
 
 object SubmissionDetails {
   implicit val format:OFormat[SubmissionDetails] = Json.format[SubmissionDetails]

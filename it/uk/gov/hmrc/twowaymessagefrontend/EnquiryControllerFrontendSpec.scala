@@ -23,8 +23,9 @@ import models.{EnquiryDetails, SubmissionDetails}
 import net.codingwell.scalaguice.ScalaModule
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{reset, when}
 import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerSuite}
+import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{Json, Reads}
 import play.api.mvc.AnyContentAsEmpty
@@ -32,6 +33,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import play.twirl.api.Html
+import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -39,13 +41,26 @@ import uk.gov.hmrc.twowaymessagefrontend.util.{ControllerSpecBase, MockAuthConne
 
 import scala.concurrent.Future
 
-class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthConnector with HtmlUnitFactory with   OneBrowserPerSuite{
+class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthConnector with HtmlUnitFactory with OneBrowserPerSuite {
 
 
   val preferencesConnector: PreferencesConnector = mock[PreferencesConnector]
   val twoWayMessageConnector: TwoWayMessageConnector = mock[TwoWayMessageConnector]
 
-  when(twoWayMessageConnector.getMessages(any())(any())).thenReturn(Future.successful(List()))
+  val twmGetEnquiryTypeDetailsResponse = Json.parse(s"""{
+                                                       |"displayName":"P800 overpayment enquiry",
+                                                       |"responseTime":"7 days",
+                                                       |"taxIdName":"nino",
+                                                       |"taxId":"AB123456C"
+                                                       |}""".stripMargin)
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(twoWayMessageConnector)
+    when(twoWayMessageConnector.getMessages(any())(any())).thenReturn(Future.successful(List()))
+    when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
+      Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))))
+  }
 
   override def fakeApplication(): Application = {
     new GuiceApplicationBuilder()
@@ -64,33 +79,27 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
   "Frontend test" should {
 
     "find the home page ok" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("p800-overpayment"))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
-        Future.successful(Some(SubmissionDetails("P800 overpayment enquiry","7 days")))
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("p800-overpayment"))(any[HeaderCarrier])) thenReturn {
+        Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse)))
       }
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       val result = await(call(enquiryController.onPageLoad("p800-overpayment"), fakeRequest))
       result.header.status mustBe 200
     }
 
-    "Forbidden is we dont have a NINO" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(None))
-      val result = await(call(enquiryController.onPageLoad("p800-overpayment"), fakeRequest))
-      result.header.status mustBe 403
-    }
-
-    "Send a valid message" in {
+    "Send a valid P800 related message" in {
       import org.mockito.Mockito._
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some("AB123456C")))
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
-      when(twoWayMessageConnector.postMessage( ArgumentMatchers.eq(enquiryDetails))(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
-        val x = Json.parse( """{ "id":"5c18eb166f0000110204b160" }""".stripMargin )
+      when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
+        val x = Json.parse("""{ "id":"5c18eb166f0000110204b160" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
       go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
@@ -99,6 +108,67 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       textArea("question").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("HMRC received your message and will reply within") }
+    }
+
+    "Display an error page when a call to two-way-message getEnquiryTypeDetails returns FORBIDDEN" in {
+      import org.mockito.Mockito._
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
+        Future.successful("email@dummy.com")
+      }
+      when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
+        Future.successful(HttpResponse(Status.FORBIDDEN)))
+      val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
+      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      eventually { pageSource must include ("Not authenticated") }
+    }
+
+    "Display an error page when a call to two-way-message getEnquiryTypeDetails returns NOT_FOUND" in {
+      import org.mockito.Mockito._
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
+        Future.successful("email@dummy.com")
+      }
+      when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
+        Future.successful(HttpResponse(Status.NOT_FOUND)))
+      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      eventually { pageSource must include ("Unknown enquiry type: p800-overpayment") }
+    }
+
+    "Display an error page when a call to two-way-message getEnquiryTypeDetails returns an invalid response" in {
+      import org.mockito.Mockito._
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
+        Future.successful("email@dummy.com")
+      }
+      when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
+        Future.successful(HttpResponse(Status.OK, Some(Json.parse("""{"invalid": "json body"}""")))))
+      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      eventually { pageSource must include ("Unknown enquiry type: p800-overpayment") }
+      verify(twoWayMessageConnector, never()).postMessage(any[EnquiryDetails])(any[HeaderCarrier])
+    }
+
+    "Display an error page when a call to two-way-message createMessage returns an invalid response" in {
+      import org.mockito.Mockito._
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
+        Future.successful("email@dummy.com")
+      }
+      val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
+      when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
+        val x = Json.parse("""{ "invalid":"response" }""".stripMargin )
+        Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
+      }
+      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      textField("subject").value = "A question"
+      emailField("email").value = "test@dummy.com"
+      textArea("question").value = "A question from the customer"
+      click on find(id("submit")).value
+      eventually { pageSource must include ("Missing reference") }
     }
   }
 
@@ -111,10 +181,10 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       eventually { pageSource must include ("Enter a subject") }
     }
 
-    "should include preferances email addr as we have it" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some("AB123456C")))
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+    "should include preferences email address as we have it" in {
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
@@ -132,10 +202,10 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
     }
   }
 
-  def stubLogin( nino:String): Unit = {
-    mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some(nino)))
-    mockAuthorise(Enrolment("HMRC-NI"))(Future.successful(Some("AB123456C")))
-    when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+  def stubLogin(nino:String): Unit = {
+    mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some(nino)))
+    mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
+    when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
       Future.successful("")
     }
   }
@@ -156,8 +226,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
 
   "back link" should {
     "go back to previous page when no parameter is passed" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       val result = call(enquiryController.onPageLoad("p800-overpayment"), fakeRequest)
@@ -165,8 +235,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
     }
 
     "go back to a given location when something is passed" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800-overpayment/make_enquiry?backCode=SGVsbG8gV29ybGQ%3D")
@@ -175,8 +245,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
     }
 
     "if something passed but is invalid then use defaults" in {
-      mockAuthorise(Enrolment("HMRC-NI"), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      when( preferencesConnector.getPreferredEmail( ArgumentMatchers.eq("AB123456C") )(ArgumentMatchers.any[HeaderCarrier])) thenReturn {
+      mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
+      when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
       val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800-overpayment/make_enquiry?backCode=hello")

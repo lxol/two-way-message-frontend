@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,16 +63,8 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
           msgList => Future.successful(msgList))
       }
 
-  def getSubmissionDetails(enquiryType: String)(implicit hc: HeaderCarrier): Future[Option[SubmissionDetails]] = {
+  def getSubmissionDetails(enquiryType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     httpClient.GET(s"$twoWayMessageBaseUrl/two-way-message/message/admin/$enquiryType/details")
-      .flatMap { response =>
-        response.status match {
-          case OK =>
-            val details = Json.parse(response.body).validate[SubmissionDetails]
-            Future.successful(details.asOpt)
-          case _ => Future.successful(None)
-        }
-      }
   }
 
   def getLatestMessage(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {

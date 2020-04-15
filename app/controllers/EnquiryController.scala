@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import config.AppConfig
 import connectors.{PreferencesConnector, TwoWayMessageConnector}
 import forms.EnquiryFormProvider
 import javax.inject.{Inject, Singleton}
-import models.{EnquiryDetails, Identifier, MessageError}
+import models.EnquiryDetails
 import play.api.data._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions, Enrolment}
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders, AuthorisationException}
 import views.html.{enquiry, enquiry_submitted, error_template}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,41 +34,39 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EnquiryController @Inject()(appConfig: AppConfig,
-                                  override val messagesApi: MessagesApi,
+                                  messagesApi: MessagesApi,
                                   formProvider: EnquiryFormProvider,
-                                  val authConnector: AuthConnector,
+                                  authConnector: AuthConnector,
                                   twoWayMessageConnector: TwoWayMessageConnector,
                                   preferencesConnector: PreferencesConnector)
-  extends FrontendController with AuthorisedFunctions with I18nSupport {
+                                 (override implicit val ec: ExecutionContext)
+  extends BaseController(appConfig, authConnector, messagesApi, twoWayMessageConnector
+) {
 
   val form: Form[EnquiryDetails] = formProvider()
 
   def onPageLoad(enquiryType: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised(Enrolment("HMRC-NI")).retrieve(Retrievals.nino) {
-        case Some(nino) =>
-          for {
-            submissionDetails <- twoWayMessageConnector.getSubmissionDetails(enquiryType)
-            email <- preferencesConnector.getPreferredEmail(nino)
-          } yield {
-            submissionDetails match {
-              case Some(details) => Ok(enquiry(appConfig, form, EnquiryDetails(enquiryType, "", "", email), details.responseTime))
-              case None => NotFound
-            }
-          }
-        case _ => Future.successful(Forbidden)
+      authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.nino) { nino =>
+        for {
+          email <- nino.fold(Future.successful(""))(preferencesConnector.getPreferredEmail(_))
+          submissionDetails <- getEnquiryTypeDetails(enquiryType)
+        } yield submissionDetails.fold(
+            (errorPage: Result) => errorPage,
+            details => Ok(enquiry(appConfig, form, EnquiryDetails(enquiryType, "", "", email), details.responseTime))
+        )
       } recoverWith {
-        case _ : AuthorisationException => Future.successful(Unauthorized)
+        case _: AuthorisationException => Future.successful(Unauthorized)
         case _ => Future.successful(InternalServerError)
       }
-    }
+  }
 
   def onSubmit(): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised(Enrolment("HMRC-NI")) {
+      authorised(AuthProviders(GovernmentGateway)) {
         val enquiryType = form.bindFromRequest().data("enquiryType")
-        twoWayMessageConnector.getSubmissionDetails(enquiryType).flatMap {
-          case Some(details) =>
+        getEnquiryTypeDetails(enquiryType).flatMap {
+          case Right(details) =>
             form.bindFromRequest().fold(
               (formWithErrors: Form[EnquiryDetails]) => {
                 Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors), details.responseTime)))
@@ -77,7 +74,7 @@ class EnquiryController @Inject()(appConfig: AppConfig,
               enquiryDetails => {
                 submitMessage(enquiryDetails, details.responseTime)
               })
-          case None => Future.successful(Ok(error_template("Error", "There was an error:", s"Unknown enquiry type: $enquiryType", appConfig)))
+          case Left(errorPage) => Future.successful(errorPage)
         }
       }
   }
@@ -100,13 +97,6 @@ class EnquiryController @Inject()(appConfig: AppConfig,
     Redirect(appConfig.personalAccountUrl)
   }
 
-  def extractId(response: HttpResponse): Either[MessageError,Identifier] = {
-    response.json.validate[Identifier].asOpt match {
-      case Some(identifier) => Right(identifier)
-      case None => Left(MessageError("Missing reference"))
-    }
-  }
-
   private def rebuildFailedForm(formWithErrors: Form[EnquiryDetails]) = {
       EnquiryDetails(
         formWithErrors.data.getOrElse("enquiryType", ""),
@@ -114,6 +104,4 @@ class EnquiryController @Inject()(appConfig: AppConfig,
         formWithErrors.data.getOrElse("question", ""),
         formWithErrors.data.getOrElse("email", ""))
     }
-
-
 }
