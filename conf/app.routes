@@ -4,11 +4,11 @@ GET     /assets/*file                                   controllers.Assets.versi
 
 GET     /language/:lang                                 controllers.LanguageSwitchController.switchToLanguage(lang: String)
 
-GET     /message/:enquiryType/make_enquiry              controllers.EnquiryController.onPageLoad(enquiryType: String)
+GET     /message/$enquiryType<sa-general|ct-general|vat-general|epaye-general|epaye-jrs>/make_enquiry      controllers.EnquiryController.onPageLoad(enquiryType: String)
 POST    /message/submit                                 controllers.EnquiryController.onSubmit()
 GET     /messages                                       controllers.EnquiryController.messagesRedirect()
 GET     /messages/personal-account                      controllers.EnquiryController.personalAccountRedirect()
 
-POST    /message/customer/:enquiryType/:replyTo/reply   controllers.ReplyController.onSubmit(enquiryType, replyTo)
-GET     /message/customer/:enquiryType/:replyTo/reply   controllers.ReplyController.onPageLoad(enquiryType, replyTo)
+POST    /message/customer/$enquiryType<sa-general|ct-general|vat-general|epaye-general|epaye-jrs>/:replyTo/reply   controllers.ReplyController.onSubmit(enquiryType, replyTo)
+GET     /message/customer/$enquiryType<sa-general|ct-general|vat-general|epaye-general|epaye-jrs>/:replyTo/reply   controllers.ReplyController.onPageLoad(enquiryType, replyTo)
 
