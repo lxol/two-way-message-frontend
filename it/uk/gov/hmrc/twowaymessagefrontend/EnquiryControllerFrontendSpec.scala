@@ -80,13 +80,13 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
 
     "find the home page ok" in {
       mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
-      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("p800-overpayment"))(any[HeaderCarrier])) thenReturn {
+      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("sa-general"))(any[HeaderCarrier])) thenReturn {
         Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse)))
       }
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val result = await(call(enquiryController.onPageLoad("p800-overpayment"), fakeRequest))
+      val result = await(call(enquiryController.onPageLoad("sa-general"), fakeRequest))
       result.header.status mustBe 200
     }
 
@@ -97,12 +97,12 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
+      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
       when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
         val x = Json.parse("""{ "id":"5c18eb166f0000110204b160" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       textField("subject").value = "A question"
       emailField("email").value = "test@dummy.com"
       textArea("question").value = "A question from the customer"
@@ -119,8 +119,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
       when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
         Future.successful(HttpResponse(Status.FORBIDDEN)))
-      val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       eventually { pageSource must include ("Not authenticated") }
     }
 
@@ -133,8 +133,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
       when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
         Future.successful(HttpResponse(Status.NOT_FOUND)))
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
-      eventually { pageSource must include ("Unknown enquiry type: p800-overpayment") }
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
+      eventually { pageSource must include ("Unknown enquiry type: sa-general") }
     }
 
     "Display an error page when a call to two-way-message getEnquiryTypeDetails returns an invalid response" in {
@@ -146,8 +146,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
       when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
         Future.successful(HttpResponse(Status.OK, Some(Json.parse("""{"invalid": "json body"}""")))))
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
-      eventually { pageSource must include ("Unknown enquiry type: p800-overpayment") }
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
+      eventually { pageSource must include ("Unknown enquiry type: sa-general") }
       verify(twoWayMessageConnector, never()).postMessage(any[EnquiryDetails])(any[HeaderCarrier])
     }
 
@@ -158,12 +158,12 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val enquiryDetails = EnquiryDetails("p800-overpayment", "A question", "A question from the customer", "test@dummy.com")
+      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
       when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
         val x = Json.parse("""{ "invalid":"response" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       textField("subject").value = "A question"
       emailField("email").value = "test@dummy.com"
       textArea("question").value = "A question from the customer"
@@ -176,7 +176,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
 
     "display error message if nothing entered" in {
       stubLogin("AB123456C")
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       click on find(id("submit")).value
       eventually { pageSource must include ("Enter a subject") }
     }
@@ -187,14 +187,14 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       eventually { emailField("email").value must include ("email@dummy.com") }
     }
 
     "content field"  should {
       "display error if nothing entered" in {
         stubLogin("AB123456C")
-        go to s"http://localhost:$port/two-way-message-frontend/message/p800-overpayment/make_enquiry"
+        go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
         textArea("question").value = ""
         click on find(id("submit")).value
         eventually { pageSource must include ("Enter a question") }
@@ -230,7 +230,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val result = call(enquiryController.onPageLoad("p800-overpayment"), fakeRequest)
+      val result = call(enquiryController.onPageLoad("sa-general"), fakeRequest)
       contentAsString(result) must not include "javascript:window.history.go(-1)"
     }
 
@@ -239,8 +239,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800-overpayment/make_enquiry?backCode=SGVsbG8gV29ybGQ%3D")
-      val result = call(enquiryController.onPageLoad("p800-overpayment"), aFakeRequest)
+      val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/sa-general/make_enquiry?backCode=SGVsbG8gV29ybGQ%3D")
+      val result = call(enquiryController.onPageLoad("sa-general"), aFakeRequest)
       contentAsString(result) must not include "javascript:window.history.go(-1)"
     }
 
@@ -249,8 +249,8 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/p800-overpayment/make_enquiry?backCode=hello")
-      val result = call(enquiryController.onPageLoad("p800-overpayment"), aFakeRequest)
+      val aFakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/message/sa-general/make_enquiry?backCode=hello")
+      val result = call(enquiryController.onPageLoad("sa-general"), aFakeRequest)
       contentAsString(result) must not include "javascript:window.history.go(-1)"
     }
   }

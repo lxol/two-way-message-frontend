@@ -78,7 +78,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "find the home page ok" in {
       mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
-      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("p800-overpayment"))(any[HeaderCarrier])) thenReturn {
+      when(twoWayMessageConnector.getSubmissionDetails(ArgumentMatchers.eq("sa-general"))(any[HeaderCarrier])) thenReturn {
         Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse)))
       }
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("5c18eb166f0000110204b160"))(any[HeaderCarrier])) thenReturn {
@@ -91,14 +91,14 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
       when(twoWayMessageConnector.getPreviousMessages(ArgumentMatchers.eq("5c18eb166f0000110204b160"))(any[HeaderCarrier])) thenReturn {
         Future.successful(Some(Html("previous")))
       }
-      val result = await(call(replyController.onPageLoad("p800-overpayment", "5c18eb166f0000110204b160"), fakeRequest))
+      val result = await(call(replyController.onPageLoad("sa-general", "5c18eb166f0000110204b160"), fakeRequest))
       result.header.status mustBe (200)
     }
 
     "Send a valid reply message" in {
       import org.mockito.Mockito._
 
-      val enquiryType = "p800-overpayment"
+      val enquiryType = "sa-general"
 
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
 
@@ -122,7 +122,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(HttpResponse(Status.CREATED, Some(x)))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b161/reply#reply-input"
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/sa-general/5c18eb166f0000110204b161/reply#reply-input"
       textArea("reply-input").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("HMRC received your message and will reply within") }
@@ -131,7 +131,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "Not send a reply message and show an error page when a call to two-way-message getEnquiryTypeDetails returns FORBIDDEN" in {
       import org.mockito.Mockito._
 
-      val enquiryType = "p800-overpayment"
+      val enquiryType = "sa-general"
 
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
 
@@ -155,7 +155,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(HttpResponse(Status.CREATED, Some(x)))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b162/reply#reply-input"
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/sa-general/5c18eb166f0000110204b162/reply#reply-input"
       textArea("reply-input").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("Not authenticated") }
@@ -165,7 +165,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "Not send a reply message and show an error page when a call to two-way-message getEnquiryTypeDetails returns NOT_FOUND" in {
       import org.mockito.Mockito._
 
-      val enquiryType = "p800-overpayment"
+      val enquiryType = "sa-general"
 
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
 
@@ -183,7 +183,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(HttpResponse(Status.NOT_FOUND, None))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b163/reply#reply-input"
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/sa-general/5c18eb166f0000110204b163/reply#reply-input"
       textArea("reply-input").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("Unknown enquiry type") }
@@ -193,7 +193,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "Not send a reply and show an error page when a call to two-way-message getEnquiryTypeDetails returns an invalid response" in {
       import org.mockito.Mockito._
 
-      val enquiryType = "p800-overpayment"
+      val enquiryType = "sa-general"
 
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
 
@@ -211,7 +211,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(HttpResponse(Status.OK, Some(Json.parse("""{"invalid": "json body"}"""))))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b167/reply#reply-input"
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/sa-general/5c18eb166f0000110204b167/reply#reply-input"
       textArea("reply-input").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("Unknown enquiry type") }
@@ -221,7 +221,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
     "Show an error page when a call to two-way-message createCustomerResponse returns an invalid response" in {
       import org.mockito.Mockito._
 
-      val enquiryType = "p800-overpayment"
+      val enquiryType = "sa-general"
 
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
 
@@ -245,7 +245,7 @@ class ReplyControllerFrontendSpec extends ControllerSpecBase  with MockAuthConne
         Future.successful(HttpResponse(Status.CREATED, Some(x)))
       }
 
-      go to s"http://localhost:$port/two-way-message-frontend/message/customer/p800-overpayment/5c18eb166f0000110204b164/reply#reply-input"
+      go to s"http://localhost:$port/two-way-message-frontend/message/customer/sa-general/5c18eb166f0000110204b164/reply#reply-input"
       textArea("reply-input").value = "A question from the customer"
       click on find(id("submit")).value
       eventually { pageSource must include ("Missing reference") }
