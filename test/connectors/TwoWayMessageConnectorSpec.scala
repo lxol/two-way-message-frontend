@@ -69,11 +69,13 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       "some-enquiry-type",
       "my subject",
       "my question",
-      "email@test.com"
+      "email@test.com",
+      "07700900077",
+      "AB123456C"
     )
 
     val message = TwoWayMessage(
-      ContactDetails(details.email),
+      ContactDetails(details.email, Some(details.telephone)),
       details.subject,
       details.question
     )
@@ -120,16 +122,10 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       "some-enquiry-type",
       "my subject",
       "my question",
-      "email@test.com"
+      "email@test.com",
+      "07700 900077 ext. 2354",
+      "AB123456C"
     )
-
-    val message = TwoWayMessage(
-      ContactDetails(details.email),
-      details.subject,
-      details.question
-    )
-
-    val replyMessage = TwoWayMessageReply("Hello world")
 
     "respond with a mongo id after a successful call to two-way-message service results in a message creation from a valid payload" in {
 

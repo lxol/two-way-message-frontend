@@ -90,20 +90,29 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       result.header.status mustBe 200
     }
 
-    "Send a valid P800 related message" in {
+    "Send a valid SA-GENERAL related message" in {
       import org.mockito.Mockito._
       mockAuthorise(AuthProviders(GovernmentGateway), OptionalRetrieval("nino", Reads.StringReads))(Future.successful(Some("AB123456C")))
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some("AB123456C")))
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
+
+      val enquiryDetails = EnquiryDetails(
+        "sa-general",
+        "A question",
+        "A question from the customer",
+        "test@dummy.com",
+        "07700 900077",
+        "AB123456C")
+
       when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
         val x = Json.parse("""{ "id":"5c18eb166f0000110204b160" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
       go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       textField("subject").value = "A question"
+      textField("telephone").value = "07700 900077"
       emailField("email").value = "test@dummy.com"
       textArea("question").value = "A question from the customer"
       click on find(id("submit")).value
@@ -119,7 +128,7 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       }
       when(twoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
         Future.successful(HttpResponse(Status.FORBIDDEN)))
-      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
+
       go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       eventually { pageSource must include ("Not authenticated") }
     }
@@ -158,13 +167,22 @@ class EnquiryControllerFrontendSpec extends ControllerSpecBase  with MockAuthCon
       when(preferencesConnector.getPreferredEmail(ArgumentMatchers.eq("AB123456C"))(any[HeaderCarrier])) thenReturn {
         Future.successful("email@dummy.com")
       }
-      val enquiryDetails = EnquiryDetails("sa-general", "A question", "A question from the customer", "test@dummy.com")
+
+      val enquiryDetails = EnquiryDetails(
+        "sa-general",
+        "A question",
+        "A question from the customer",
+        "test@dummy.com",
+        "07700 900077",
+        "AB123456C")
+
       when(twoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])) thenReturn {
         val x = Json.parse("""{ "invalid":"response" }""".stripMargin )
         Future.successful(HttpResponse(play.api.http.Status.CREATED, Some(x)))
       }
       go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry"
       textField("subject").value = "A question"
+      textField("telephone").value = "07700 900077"
       emailField("email").value = "test@dummy.com"
       textArea("question").value = "A question from the customer"
       click on find(id("submit")).value

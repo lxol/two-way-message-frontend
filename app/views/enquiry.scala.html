@@ -48,22 +48,52 @@
             spellcheck = true
         )
 
+        @if(!defaultEnquiryDetails.enquiryType.startsWith("p800")) {
+            @components.input_text(
+                field = form("telephone"),
+                maxlength = Option(25),
+                label = messages("enquiry.telephone"),
+                overrideStyle = "width: 100%",
+                initialValue = defaultEnquiryDetails.telephone,
+                hint = Some(messages("enquiry.telephone.hint")),
+                typeAttribute = "text",
+                spellcheck = false
+            )
+        } else {
+            <input type="hidden" id='@{form("telephone").id}' name='@{form("telephone").name}' value="@{defaultEnquiryDetails.telephone}">
+        }
+
         @components.input_text(
             field = form("email"),
             maxlength = Option(256),
             label = messages("enquiry.email"),
             overrideStyle = "width: 67%",
             initialValue = defaultEnquiryDetails.email,
-            hint = Some(messages("enquiry.question.hint")),
+            hint = Some(messages("enquiry.email.hint")),
             typeAttribute = "email",
             spellcheck = false
         )
+
+        @if(defaultEnquiryDetails.enquiryType.startsWith("epaye")) {
+            @components.input_text(
+                field = form("taxId"),
+                label = messages("enquiry.taxId.epaye"),
+                overrideStyle = "width: 100%",
+                initialValue = defaultEnquiryDetails.taxId,
+                hint = Some(messages("enquiry.taxId.hint")),
+                typeAttribute = "text",
+                spellcheck = false,
+                isReadOnly = true
+            )
+        } else {
+            <input type="hidden" id='@{form("taxId").id}' name='@{form("taxId").name}' value="@{defaultEnquiryDetails.taxId}">
+        }
 
         @components.input_textarea(
             field = form("question"),
             label = messages("enquiry.question"),
             initialValue = defaultEnquiryDetails.question,
-            hint = Some(messages("enquiry.hint")),
+            hint = Some(messages("enquiry.question.hint")),
             spellcheck = true
         )
 

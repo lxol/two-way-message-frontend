@@ -29,7 +29,8 @@ class TwoWayMessageSpec extends FunSuite {
       |{
       | "contactDetails":
       | {
-      |   "email":"test@test.com"
+      |   "email":"test@test.com",
+      |   "telephone":"07700 900077"
       | },
       | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
       | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
@@ -37,7 +38,7 @@ class TwoWayMessageSpec extends FunSuite {
     """.stripMargin)
 
   test("TwoWayMessage should escape HTML subject content correctly") {
-    val twoWayMessage = TwoWayMessage(ContactDetails("test@test.com"),"<b>Hello & World</b>","Some content",None)
+    val twoWayMessage = TwoWayMessage(ContactDetails("test@test.com", Some("07700 900077")),"<b>Hello & World</b>","Some content",None)
     val json = Json.toJson(twoWayMessage)
     assert(json === expectedJson)
   }
@@ -80,6 +81,4 @@ class TwoWayMessageSpec extends FunSuite {
     val result = HTMLEncoder.encode(s)
     assert(result === "PHA+SGVsbG8gJmFtcDsgJmx0O1dvcmxkJmd0OzwvcD4=")
   }
-
-
 }

@@ -24,7 +24,8 @@
         initialValue: String,
         overrideStyle: String = "",
         typeAttribute: String,
-        spellcheck: Boolean
+        spellcheck: Boolean,
+        isReadOnly: Boolean = false
 
 )(implicit messages: Messages)
 
@@ -50,6 +51,7 @@
         @if(field.hasErrors){aria-describedby="error-message-@{field.id}-input"}
         @if(maxlength.nonEmpty){ maxlength="@{maxlength.get}" }
         style="@{overrideStyle}"
+        @if(isReadOnly){ readonly }
         />
     </div>
 </div>

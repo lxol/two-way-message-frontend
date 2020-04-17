@@ -41,7 +41,7 @@ class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
 
   def postMessage(details: EnquiryDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessage(
-      ContactDetails(details.email),
+      ContactDetails(details.email, Some(details.telephone)),
       details.subject,
       details.question
     )

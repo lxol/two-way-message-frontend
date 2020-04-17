@@ -23,21 +23,20 @@ import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{Lang, Messages, MessagesApi}
 
-class EnquiryFormProvider @Inject()( messagesApi: MessagesApi)   {
-  private val SUBJECT_MAX_LENGTH = 65
+class EnquiryFormProvider @Inject()(messagesApi: MessagesApi)   {
 
-
-  val messages = messagesApi.preferred( Seq(Lang("en")))
+  val messages = messagesApi.preferred(Seq(Lang("en")))
   def apply(): Form[EnquiryDetails] =
     Form(
       mapping(
         "enquiryType" -> nonEmptyText,
-        "subject" -> nonEmptyTextWithError("Enter a subject").verifying( subjectConstraint),
-        "question" -> nonEmptyTextWithError("Enter a question").verifying( contentConstraint),
-        "email" -> email
+        "subject" -> nonEmptyTextWithError("Enter a subject").verifying(subjectConstraint),
+        "question" -> nonEmptyTextWithError("Enter a question").verifying(contentConstraint),
+        "email" -> email,
+        "telephone" -> nonEmptyTextWithError("Enter a telephone number").verifying(telephoneConstraint),
+        "taxId" -> text
       )(EnquiryDetails.apply)(EnquiryDetails.unapply)
     )
-
 
   def nonEmptyTextWithError(error: String): Mapping[String] = {
     Forms.text verifying Constraint[String]("constraint.required") { o =>
@@ -45,13 +44,21 @@ class EnquiryFormProvider @Inject()( messagesApi: MessagesApi)   {
     }
   }
 
-
   val subjectConstraint: Constraint[String] = Constraint("constraints.subject")({
     plainText =>
       if (plainText.length <= 65) {
         Valid
       } else {
         Invalid(Seq(ValidationError("Subject has a maximum length of 65 characters")))
+      }
+  })
+
+  val telephoneConstraint: Constraint[String] = Constraint("constraints.telephone")({
+    plainText =>
+      if (plainText.length <= 25) {
+        Valid
+      } else {
+        Invalid(Seq(ValidationError("Telephone number has a maximum length of 25 characters")))
       }
   })
 

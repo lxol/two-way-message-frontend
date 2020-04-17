@@ -53,7 +53,7 @@ class EnquiryController @Inject()(appConfig: AppConfig,
           submissionDetails <- getEnquiryTypeDetails(enquiryType)
         } yield submissionDetails.fold(
             (errorPage: Result) => errorPage,
-            details => Ok(enquiry(appConfig, form, EnquiryDetails(enquiryType, "", "", email), details.responseTime))
+            details => Ok(enquiry(appConfig, form, EnquiryDetails(enquiryType, "", "", email, "", details.taxId), details.responseTime))
         )
       } recoverWith {
         case _: AuthorisationException => Future.successful(Unauthorized)
@@ -69,7 +69,7 @@ class EnquiryController @Inject()(appConfig: AppConfig,
           case Right(details) =>
             form.bindFromRequest().fold(
               (formWithErrors: Form[EnquiryDetails]) => {
-                Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors), details.responseTime)))
+                Future.successful(BadRequest(enquiry(appConfig, formWithErrors, rebuildFailedForm(formWithErrors, details.taxId), details.responseTime)))
               },
               enquiryDetails => {
                 submitMessage(enquiryDetails, details.responseTime)
@@ -97,11 +97,14 @@ class EnquiryController @Inject()(appConfig: AppConfig,
     Redirect(appConfig.personalAccountUrl)
   }
 
-  private def rebuildFailedForm(formWithErrors: Form[EnquiryDetails]) = {
+  private def rebuildFailedForm(formWithErrors: Form[EnquiryDetails], taxId: String) = {
       EnquiryDetails(
         formWithErrors.data.getOrElse("enquiryType", ""),
         formWithErrors.data.getOrElse("subject", ""),
         formWithErrors.data.getOrElse("question", ""),
-        formWithErrors.data.getOrElse("email", ""))
+        formWithErrors.data.getOrElse("email", ""),
+        formWithErrors.data.getOrElse("telephone", ""),
+        taxId
+      )
     }
 }

@@ -47,11 +47,15 @@ enquiry.title = Ask a secure question
 enquiry.heading = Send your message
 enquiry.subject = Your subject
 enquiry.email = Email address
+enquiry.email.hint = We will only use this to contact you about this message.
+enquiry.telephone = UK telephone number
+enquiry.telephone.hint = We will only use this to contact you about this message.
+enquiry.taxId.hint = This is the reference HMRC holds for this business.
+enquiry.taxId.epaye = Employer PAYE reference
 enquiry.confirmEmail = Confirm email
 enquiry.whatis = Type of the question
 enquiry.question = What is your question?
-enquiry.hint = More detail will help us answer your question quickly.
-enquiry.question.hint = We''ll only use this to discuss your message.
+enquiry.question.hint = More detail will help us answer your question quickly.
 
 enquiry.success.title = Message sent
 enquiry.success.heading = Message sent

@@ -119,15 +119,19 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
     val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
       "enquiryType" -> "p800",
       "subject" -> "subject",
-      "question" -> "question",
-      "email" -> "test@test.com"
+      "telephone" -> "07700 900077",
+      "email" -> "test@test.com",
+      "taxId" -> "AB123456C",
+      "question" -> "question"
     )
 
     val enquiryDetails = EnquiryDetails(
       "p800",
       "subject",
       "question",
-      "test@test.com"
+      "test@test.com",
+      "07700 900077",
+      "AB123456C"
     )
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
@@ -197,17 +201,22 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
 
-      val matchingEmails: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
+      val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
         "enquiryType" -> "p800",
         "subject" -> "subject",
-        "question" -> "question",
-        "email" -> "test@test.com"
+        "telephone" -> "07700 900077",
+        "email" -> "test@test.com",
+        "taxId" -> "AB123456C",
+        "question" -> "question"
       )
+
       val enquiryDetails = EnquiryDetails(
         "p800",
         "subject",
         "question",
-        "test@test.com"
+        "test@test.com",
+        "07700 900077",
+        "AB123456C"
       )
 
       when(mockTwoWayMessageConnector.postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])).thenReturn(
@@ -216,25 +225,50 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         )
       )
 
-      val result = await(call(controller.onSubmit(), matchingEmails))
+      val result = await(call(controller.onSubmit(), requestWithFormData))
       result.header.status shouldBe Status.OK
     }
 
-    "Unsuccessful when subject is too long" in {
+    "Unsuccessful when subject and telephone are too long" in {
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
 
-      val nonMatchingEmails: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
+      val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
         "enquiryType" -> "p800",
         "subject" -> "a" * 66,
         "question" -> "test",
-        "email" -> "test@test.com"
+        "email" -> "test@test.com",
+        "telephone" -> "a" * 26,
+        "taxId" -> "AB123456C"
       )
 
-      val result = await(call(controller.onSubmit(), nonMatchingEmails))
+      val result = await(call(controller.onSubmit(), requestWithFormData))
       result.header.status shouldBe Status.BAD_REQUEST
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByClass("error-summary-list").html() shouldBe "<li><a href=\"#subject\">Subject has a maximum length of 65 characters</a></li>"
+      document.getElementsByClass("error-summary-list").html() contains
+        """<li><a href="#subject">Subject has a maximum length of 65 characters</a></li>"""
+      document.getElementsByClass("error-summary-list").html() contains
+        """<li><a href="#telephone">Telephone number has a maximum length of 25 characters</a></li>"""
+    }
+
+    "Unsuccessful when email is invalid" in {
+      val nino = Nino("AB123456C")
+      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
+
+      val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
+        "enquiryType" -> "p800",
+        "subject" -> "subject",
+        "telephone" -> "07700 900077",
+        "email" -> "test.test.com",
+        "taxId" -> "AB123456C",
+        "question" -> "question"
+      )
+
+      val result = await(call(controller.onSubmit(), requestWithFormData))
+      result.header.status shouldBe Status.BAD_REQUEST
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByClass("error-summary-list").html() shouldBe
+        """<li><a href="#email">Enter a valid email</a></li>"""
     }
   }
 

@@ -23,7 +23,7 @@ import play.twirl.api.HtmlFormat
 
 import scala.xml.{Node, NodeBuffer, Text}
 
-case class ContactDetails(email: String)
+case class ContactDetails(email: String, telephone: Option[String])
 
 object ContactDetails {
 
