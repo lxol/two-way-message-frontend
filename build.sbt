@@ -21,13 +21,13 @@ lazy val scalafmtCustomSettings = scalafmtCoreSettings ++
            val previousInputs = (compileInputs in compile).value
            task.map(_ => previousInputs)
          }.value
-       ) ++
-       inTask(test)(
-         Seq(
-           scalafmtDialect := Dialect.SCALA,
-           sourceDirectories := Seq(scalaSource.value)
-         )
-       )
+       )// ++
+       // inTask(test)(
+       //   Seq(
+       //     scalafmtDialect := Dialect.SCALA,
+       //     sourceDirectories := Seq(scalaSource.value)
+       //   )
+       // )
        // inTask(scalafmt)(
        //   Seq(
        //     scalafmtDialect := Dialect.SCALA,
@@ -54,7 +54,15 @@ lazy val root = (project in file("."))
       "models._",
       "controllers.binders.Binders._"
     ),
-    inConfig(IntegrationTest)(scalafmtCustomSettings),
+    inConfig(IntegrationTest)(scalafmtCoreSettings ++
+       Seq(
+         compileInputs in compile := Def.taskDyn {
+           val task = test in (resolvedScoped.value.scope in scalafmt.key)
+           val previousInputs = (compileInputs in compile).value
+           task.map(_ => previousInputs)
+         }.value
+       )
+    ),
     //scalafmtTestOnCompile in IntegrationTest := true,
     scalafmtTestOnCompile in IntegrationTest := true,
     scalafmtTestOnCompile in ThisBuild := true,
