@@ -63,13 +63,7 @@ lazy val root = (project in file("."))
          }.value
        )
     ),
-    //scalafmtTestOnCompile in IntegrationTest := true,
-    scalafmtTestOnCompile in IntegrationTest := true,
     scalafmtTestOnCompile in ThisBuild := true,
-    // scalafmtTestOnCompile in IntegrationTest := true,
-    // scalafmtOnCompile in ThisBuild := true,
-    // scalafmtOnCompile in IntegrationTest := true,
-    // inConfig(IntegrationTest)(scalafmtSettings),
     RoutesKeys.routesImport ++= Seq("models._"),
     PlayKeys.playDefaultPort := 8990,
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
