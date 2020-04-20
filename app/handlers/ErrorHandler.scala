@@ -29,35 +29,54 @@ import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 import views.html.error_template
 
 @Singleton
-class ErrorHandler @Inject()(val appConfig: AppConfig,
-                              val messagesApi: MessagesApi,
-                             val config: Configuration,
-                             val env: Environment)
-  extends FrontendErrorHandler with AuthRedirects {
+class ErrorHandler @Inject() (
+    val appConfig: AppConfig,
+    val messagesApi: MessagesApi,
+    val config: Configuration,
+    val env: Environment
+) extends FrontendErrorHandler
+    with AuthRedirects {
 
-  override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
+  override def standardErrorTemplate(
+      pageTitle: String,
+      heading: String,
+      message: String
+  )(implicit request: Request[_]) =
     error_template(pageTitle, heading, message, appConfig)
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Result = {
     ex match {
       case _: MissingBearerToken =>
-        Logger.debug("[AuthenticationPredicate][async] Missing Bearer Token. Redirecting to GG Login.")
+        Logger.debug(
+          "[AuthenticationPredicate][async] Missing Bearer Token. Redirecting to GG Login."
+        )
         toGGLogin(rh.uri)
       case _: BearerTokenExpired =>
-        Logger.debug("[AuthenticationPredicate][async] Bearer Token Timed Out. Redirecting to GG Login.")
+        Logger.debug(
+          "[AuthenticationPredicate][async] Bearer Token Timed Out. Redirecting to GG Login."
+        )
         toGGLogin(rh.uri)
       case _: NoActiveSession =>
-        Logger.debug("[AuthenticationPredicate][async] No Active Auth Session. Redirecting to GG Login.")
+        Logger.debug(
+          "[AuthenticationPredicate][async] No Active Auth Session. Redirecting to GG Login."
+        )
         toGGLogin(rh.uri)
       case _: AuthorisationException =>
-        Logger.debug("[AuthenticationPredicate][async] Unauthorised request. Redirecting to GG Login.")
+        Logger.debug(
+          "[AuthenticationPredicate][async] Unauthorised request. Redirecting to GG Login."
+        )
         toGGLogin(rh.uri)
       case _: NotFoundException =>
         NotFound(notFoundTemplate(Request(rh, "")))
       case _: Upstream5xxResponse =>
         // currently the two-way-message m/s converts any errors from the message m/s to 502 errors so any errors originating there will end up here
-        InternalServerError(standardErrorTemplate("Error","There was an error: ",
-          "We are unable to process your enquiry at this time. Please try again later.")(Request(rh, "")))
+        InternalServerError(
+          standardErrorTemplate(
+            "Error",
+            "There was an error: ",
+            "We are unable to process your enquiry at this time. Please try again later."
+          )(Request(rh, ""))
+        )
       case _ => super.resolveError(rh, ex)
     }
   }

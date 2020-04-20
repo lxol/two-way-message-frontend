@@ -25,6 +25,7 @@ trait ControllerSpecBase extends SpecBase {
 
   lazy val appConfig: AppConfig = injector.instanceOf[FrontendAppConfig]
   lazy val messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
-  lazy val formProvider: EnquiryFormProvider = injector.instanceOf[EnquiryFormProvider]
+  lazy val formProvider: EnquiryFormProvider =
+    injector.instanceOf[EnquiryFormProvider]
   lazy val messages: Messages = messagesApi.preferred(fakeRequest)
 }

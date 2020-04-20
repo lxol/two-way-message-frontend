@@ -31,49 +31,84 @@ import uk.gov.hmrc.play.config.ServicesConfig
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TwoWayMessageConnector @Inject()(httpClient: HttpClient,
-                                       override val runModeConfiguration: Configuration,
-                                       val environment: Environment)(implicit ec: ExecutionContext)
-  extends Status with ServicesConfig {
+class TwoWayMessageConnector @Inject() (
+    httpClient: HttpClient,
+    override val runModeConfiguration: Configuration,
+    val environment: Environment
+)(implicit ec: ExecutionContext)
+    extends Status
+    with ServicesConfig {
 
   override protected def mode: Mode = environment.mode
   lazy val twoWayMessageBaseUrl: String = baseUrl("two-way-message")
 
-  def postMessage(details: EnquiryDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def postMessage(
+      details: EnquiryDetails
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessage(
       ContactDetails(details.email, Some(details.telephone)),
       details.subject,
       details.question
     )
-    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/${details.enquiryType}/submit", message)
+    httpClient.POST(
+      s"$twoWayMessageBaseUrl/two-way-message/message/customer/${details.enquiryType}/submit",
+      message
+    )
   }
 
-  def postReplyMessage(details: ReplyDetails, enquiryType: String, replyTo: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def postReplyMessage(
+      details: ReplyDetails,
+      enquiryType: String,
+      replyTo: String
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessageReply(
       details.content
     )
-    httpClient.POST(s"$twoWayMessageBaseUrl/two-way-message/message/customer/$enquiryType/$replyTo/reply", message)
+    httpClient.POST(
+      s"$twoWayMessageBaseUrl/two-way-message/message/customer/$enquiryType/$replyTo/reply",
+      message
+    )
   }
 
-  def getMessages(messageId: String)(implicit hc: HeaderCarrier): Future[List[ConversationItem]] =
-    httpClient.GET(s"$twoWayMessageBaseUrl/two-way-message/message/messages-list/$messageId")
-      .flatMap {
-        response => response.json.validate[List[ConversationItem]].fold(
-          errors => Future.failed(new Exception(Json stringify JsError.toJson(errors))),
-          msgList => Future.successful(msgList))
+  def getMessages(
+      messageId: String
+  )(implicit hc: HeaderCarrier): Future[List[ConversationItem]] =
+    httpClient
+      .GET(
+        s"$twoWayMessageBaseUrl/two-way-message/message/messages-list/$messageId"
+      )
+      .flatMap { response =>
+        response.json
+          .validate[List[ConversationItem]]
+          .fold(
+            errors =>
+              Future
+                .failed(new Exception(Json stringify JsError.toJson(errors))),
+            msgList => Future.successful(msgList)
+          )
       }
 
-  def getSubmissionDetails(enquiryType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    httpClient.GET(s"$twoWayMessageBaseUrl/two-way-message/message/admin/$enquiryType/details")
+  def getSubmissionDetails(
+      enquiryType: String
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    httpClient.GET(
+      s"$twoWayMessageBaseUrl/two-way-message/message/admin/$enquiryType/details"
+    )
   }
 
-  def getLatestMessage(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"$twoWayMessageBaseUrl/messages/$messageId/latest-message")
+  def getLatestMessage(
+      messageId: String
+  )(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    httpClient
+      .GET(s"$twoWayMessageBaseUrl/messages/$messageId/latest-message")
       .map { response => Some(Html(response.body)) }
   }
 
-  def getPreviousMessages(messageId: String)(implicit hc: HeaderCarrier): Future[Option[Html]] = {
-    httpClient.GET(s"$twoWayMessageBaseUrl/messages/$messageId/previous-messages")
+  def getPreviousMessages(
+      messageId: String
+  )(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    httpClient
+      .GET(s"$twoWayMessageBaseUrl/messages/$messageId/previous-messages")
       .map { response => Some(Html(response.body)) }
   }
 

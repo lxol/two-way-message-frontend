@@ -23,19 +23,22 @@ trait Fixtures {
 
   val testConversationItem = ConversationItem(
     subject = "test subject",
-    body = Some(ConversationItemDetails(
-      `type` = MessageType.Adviser,
-      form = FormId.Reply,
-      issueDate = Some(LocalDate.now),
-      replyTo = Some("reply-to-id"),
-      enquiryType = Some("test-enquiry-type"),
-      adviser = Some(Adviser(pidId = "adviser-id")))),
+    body = Some(
+      ConversationItemDetails(
+        `type` = MessageType.Adviser,
+        form = FormId.Reply,
+        issueDate = Some(LocalDate.now),
+        replyTo = Some("reply-to-id"),
+        enquiryType = Some("test-enquiry-type"),
+        adviser = Some(Adviser(pidId = "adviser-id"))
+      )
+    ),
     validFrom = LocalDate.now,
     content = Some("test-content")
   )
 
-  def conversationItem(id:String) =
-     s"""
+  def conversationItem(id: String) =
+    s"""
      | {
      |     "renderUrl": {
      |         "url": "relUrl",
@@ -83,13 +86,12 @@ trait Fixtures {
      | }
      """.stripMargin
 
-  def conversationItems(id1:String, id2: String) =
+  def conversationItems(id1: String, id2: String) =
     s"""
            | [
            | ${conversationItem(id1)},
            | ${conversationItem(id2)}
            | ]
          """.stripMargin
-
 
 }

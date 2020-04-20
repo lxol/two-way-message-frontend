@@ -25,25 +25,31 @@ import uk.gov.hmrc.play.language.LanguageUtils
 
 // TODO, upstream this into play-language
 class LanguageSwitchController @Inject() (
-                                           configuration: Configuration,
-                                           appConfig: FrontendAppConfig,
-                                           implicit val messagesApi: MessagesApi
-                                         ) extends Controller with I18nSupport {
+    configuration: Configuration,
+    appConfig: FrontendAppConfig,
+    implicit val messagesApi: MessagesApi
+) extends Controller
+    with I18nSupport {
 
-  private def langToCall(lang: String): (String) => Call = appConfig.routeToSwitchLanguage
+  private def langToCall(lang: String): (String) => Call =
+    appConfig.routeToSwitchLanguage
 
   private def languageMap: Map[String, Lang] = appConfig.languageMap
 
-  def switchToLanguage(language: String): Action[AnyContent] = Action {
-    implicit request =>
-      val lang = if (isWelshEnabled)
-        { languageMap.getOrElse(language, LanguageUtils.getCurrentLang) }
-       else { Lang("en") }
+  def switchToLanguage(language: String): Action[AnyContent] =
+    Action { implicit request =>
+      val lang = if (isWelshEnabled) {
+        languageMap.getOrElse(language, LanguageUtils.getCurrentLang)
+      } else { Lang("en") }
 
       val redirectURL = request.headers.get(REFERER).getOrElse("")
-      Redirect(redirectURL).withLang(Lang.apply(lang.code)).flashing(LanguageUtils.FlashWithSwitchIndicator)
-  }
+      Redirect(redirectURL)
+        .withLang(Lang.apply(lang.code))
+        .flashing(LanguageUtils.FlashWithSwitchIndicator)
+    }
 
   private def isWelshEnabled: Boolean =
-    configuration.getBoolean("microservice.services.features.welsh-translation").getOrElse(true)
+    configuration
+      .getBoolean("microservice.services.features.welsh-translation")
+      .getOrElse(true)
 }

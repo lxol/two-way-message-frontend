@@ -23,51 +23,68 @@ import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{Lang, Messages, MessagesApi}
 
-class EnquiryFormProvider @Inject()(messagesApi: MessagesApi)   {
+class EnquiryFormProvider @Inject() (messagesApi: MessagesApi) {
 
   val messages = messagesApi.preferred(Seq(Lang("en")))
   def apply(): Form[EnquiryDetails] =
     Form(
       mapping(
         "enquiryType" -> nonEmptyText,
-        "subject" -> nonEmptyTextWithError("Enter a subject").verifying(subjectConstraint),
-        "question" -> nonEmptyTextWithError("Enter a question").verifying(contentConstraint),
+        "subject" -> nonEmptyTextWithError("Enter a subject")
+          .verifying(subjectConstraint),
+        "question" -> nonEmptyTextWithError("Enter a question")
+          .verifying(contentConstraint),
         "email" -> email,
-        "telephone" -> nonEmptyTextWithError("Enter a telephone number").verifying(telephoneConstraint),
+        "telephone" -> nonEmptyTextWithError("Enter a telephone number")
+          .verifying(telephoneConstraint),
         "taxId" -> text
       )(EnquiryDetails.apply)(EnquiryDetails.unapply)
     )
 
   def nonEmptyTextWithError(error: String): Mapping[String] = {
     Forms.text verifying Constraint[String]("constraint.required") { o =>
-      if (o == null) Invalid(ValidationError(error)) else if (o.trim.isEmpty) Invalid(ValidationError(error)) else Valid
+      if (o == null) Invalid(ValidationError(error))
+      else if (o.trim.isEmpty) Invalid(ValidationError(error))
+      else Valid
     }
   }
 
-  val subjectConstraint: Constraint[String] = Constraint("constraints.subject")({
-    plainText =>
+  val subjectConstraint: Constraint[String] =
+    Constraint("constraints.subject")({ plainText =>
       if (plainText.length <= 65) {
         Valid
       } else {
-        Invalid(Seq(ValidationError("Subject has a maximum length of 65 characters")))
+        Invalid(
+          Seq(ValidationError("Subject has a maximum length of 65 characters"))
+        )
       }
-  })
+    })
 
-  val telephoneConstraint: Constraint[String] = Constraint("constraints.telephone")({
-    plainText =>
+  val telephoneConstraint: Constraint[String] =
+    Constraint("constraints.telephone")({ plainText =>
       if (plainText.length <= 25) {
         Valid
       } else {
-        Invalid(Seq(ValidationError("Telephone number has a maximum length of 25 characters")))
+        Invalid(
+          Seq(
+            ValidationError(
+              "Telephone number has a maximum length of 25 characters"
+            )
+          )
+        )
       }
-  })
+    })
 
-  val contentConstraint: Constraint[String] = Constraint("constraints.question")({
-    plainText =>
+  val contentConstraint: Constraint[String] =
+    Constraint("constraints.question")({ plainText =>
       if (plainText.length <= 75000) {
         Valid
       } else {
-        Invalid(Seq(ValidationError("Content has a maximum length of 75,000 characters")))
+        Invalid(
+          Seq(
+            ValidationError("Content has a maximum length of 75,000 characters")
+          )
+        )
       }
-  })
+    })
 }

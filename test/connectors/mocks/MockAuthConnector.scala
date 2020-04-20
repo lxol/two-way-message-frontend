@@ -32,16 +32,18 @@ trait MockAuthConnector extends BeforeAndAfterEach with MockitoSugar {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-  def mockAuthorise[T](predicate: Predicate = EmptyPredicate,
-                       retrievals: Retrieval[T] = EmptyRetrieval
-                      )(response: Future[T]): Unit = {
+  def mockAuthorise[T](
+      predicate: Predicate = EmptyPredicate,
+      retrievals: Retrieval[T] = EmptyRetrieval
+  )(response: Future[T]): Unit = {
     when(
       mockAuthConnector.authorise(
         ArgumentMatchers.eq(predicate),
         ArgumentMatchers.eq(retrievals)
       )(
         ArgumentMatchers.any[HeaderCarrier],
-        ArgumentMatchers.any[ExecutionContext])
+        ArgumentMatchers.any[ExecutionContext]
+      )
     ) thenReturn response
   }
 

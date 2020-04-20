@@ -19,7 +19,13 @@ package controllers
 import com.google.inject.AbstractModule
 import connectors.TwoWayMessageConnector
 import connectors.mocks.MockAuthConnector
-import models.{ConversationItem, Identifier, MessageError, ReplyDetails, SubmissionDetails}
+import models.{
+  ConversationItem,
+  Identifier,
+  MessageError,
+  ReplyDetails,
+  SubmissionDetails
+}
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import play.api.Application
@@ -55,11 +61,20 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
   when(mockMessageRenderer.renderMessage(any())).thenReturn(Html(""))
   when(mockMessageRenderer.renderMessages(any())).thenReturn(Html(""))
-  when(mockTwoWayMessageConnector.getMessages(any())(any())).thenReturn(List[ConversationItem]())
-  when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier]))
-    .thenReturn(Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))))
-  when(mockTwoWayMessageConnector.getLatestMessage(any())(any())).thenReturn(Some(Html("")))
-  when(mockTwoWayMessageConnector.getPreviousMessages(any())(any())).thenReturn(Some(Html("")))
+  when(mockTwoWayMessageConnector.getMessages(any())(any()))
+    .thenReturn(List[ConversationItem]())
+  when(
+    mockTwoWayMessageConnector
+      .getSubmissionDetails(any[String])(any[HeaderCarrier])
+  ).thenReturn(
+    Future.successful(
+      HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))
+    )
+  )
+  when(mockTwoWayMessageConnector.getLatestMessage(any())(any()))
+    .thenReturn(Some(Html("")))
+  when(mockTwoWayMessageConnector.getPreviousMessages(any())(any()))
+    .thenReturn(Some(Html("")))
 
   override def fakeApplication(): Application = {
 
@@ -81,9 +96,16 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) enrolment from auth-client" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.email)(Future.successful(Some(nino.value)))
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-      val result = call(controller.onPageLoad("p800-overpayment", "messageid"), fakeRequest)
+      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.email)(
+        Future.successful(Some(nino.value))
+      )
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
+      val result = call(
+        controller.onPageLoad("p800-overpayment", "messageid"),
+        fakeRequest
+      )
       status(result) shouldBe Status.OK
     }
   }
@@ -92,83 +114,129 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
   "calling onSubmit()" should {
     val enquiryType = "p800-overpayment"
     val messageId = "543e92e101000001006300c9"
-    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
-    val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-      "reply-input" -> "test content"
-    )
+    val fakeRequestWithForm =
+      FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
+    val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
+      fakeRequestWithForm.withFormUrlEncodedBody(
+        "reply-input" -> "test content"
+      )
     val replyDetails = ReplyDetails(
       "test content"
     )
 
-    val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-      "bad" -> "value",
-      "enquiryType" -> "This will always be present"
-    )
+    val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
+      fakeRequestWithForm.withFormUrlEncodedBody(
+        "bad" -> "value",
+        "enquiryType" -> "This will always be present"
+      )
 
-    val badRequestWithEmptyFormData: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-      "reply-input" -> ""
-    )
+    val badRequestWithEmptyFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
+      fakeRequestWithForm.withFormUrlEncodedBody(
+        "reply-input" -> ""
+      )
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
-      val twmPostMessageResponse = Json.parse(
-        """
+      val twmPostMessageResponse =
+        Json.parse("""
           |    {
           |     "id":"5c18eb166f0000110204b160"
           |    }""".stripMargin)
 
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
+      when(
+        mockTwoWayMessageConnector.postReplyMessage(
+          ArgumentMatchers.eq(replyDetails),
+          ArgumentMatchers.eq(enquiryType),
+          ArgumentMatchers.eq(messageId)
+        )(any[HeaderCarrier])
+      ).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
         )
       )
 
-      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
+      val result = await(
+        call(controller.onSubmit(enquiryType, messageId), requestWithFormData)
+      )
       result.header.status shouldBe Status.OK
     }
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
       val bad2wmPostMessageResponse = Json.parse("{}")
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
+      when(
+        mockTwoWayMessageConnector.postReplyMessage(
+          ArgumentMatchers.eq(replyDetails),
+          ArgumentMatchers.eq(enquiryType),
+          ArgumentMatchers.eq(messageId)
+        )(any[HeaderCarrier])
+      ).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CREATED, Some(bad2wmPostMessageResponse))
         )
       )
-      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
+      val result = await(
+        call(controller.onSubmit(enquiryType, messageId), requestWithFormData)
+      )
       result.header.status shouldBe Status.OK
     }
 
     "return 400 (BAD_REQUEST) when presented with invalid form data" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-      val result = call(controller.onSubmit(enquiryType, messageId), badRequestWithFormData)
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
+      val result = call(
+        controller.onSubmit(enquiryType, messageId),
+        badRequestWithFormData
+      )
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 (BAD_REQUEST) when presented with empty form data" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-      val result = call(controller.onSubmit(enquiryType, messageId), badRequestWithEmptyFormData)
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
+      val result = call(
+        controller.onSubmit(enquiryType, messageId),
+        badRequestWithEmptyFormData
+      )
       status(result) shouldBe Status.BAD_REQUEST
 
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByClass("error-summary-list").html() shouldBe """<li><a href="#reply-input">Please enter a value</a></li>"""
+      document
+        .getElementsByClass("error-summary-list")
+        .html() shouldBe """<li><a href="#reply-input">Please enter a value</a></li>"""
     }
 
     "return 200 (OK) when two-way-message service returns a different status than 201 (CREATED)" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
+      )
 
-      when(mockTwoWayMessageConnector.postReplyMessage(ArgumentMatchers.eq(replyDetails), ArgumentMatchers.eq(enquiryType), ArgumentMatchers.eq(messageId))(any[HeaderCarrier])).thenReturn(
+      when(
+        mockTwoWayMessageConnector.postReplyMessage(
+          ArgumentMatchers.eq(replyDetails),
+          ArgumentMatchers.eq(enquiryType),
+          ArgumentMatchers.eq(messageId)
+        )(any[HeaderCarrier])
+      ).thenReturn(
         Future.successful(
           HttpResponse(Http.Status.CONFLICT)
         )
       )
 
-      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithFormData))
+      val result = await(
+        call(controller.onSubmit(enquiryType, messageId), requestWithFormData)
+      )
       result.header.status shouldBe Status.OK
     }
   }
@@ -176,22 +244,32 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
   "validation should" should {
     val enquiryType = "p800-overpayment"
     val messageId = "543e92e101000001006300c9"
-    val fakeRequestWithForm = FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
+    val fakeRequestWithForm =
+      FakeRequest(routes.ReplyController.onSubmit(enquiryType, messageId))
 
     "Unsuccessful when subject is too long" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(Future.successful(Some(nino.value)))
-
-      val requestWithLongContent: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithForm.withFormUrlEncodedBody(
-        "reply-input" -> "a" * (100000 + 1)
+      mockAuthorise(AuthProviders(GovernmentGateway))(
+        Future.successful(Some(nino.value))
       )
 
-      val result = await(call(controller.onSubmit(enquiryType, messageId), requestWithLongContent))
+      val requestWithLongContent: FakeRequest[AnyContentAsFormUrlEncoded] =
+        fakeRequestWithForm.withFormUrlEncodedBody(
+          "reply-input" -> "a" * (100000 + 1)
+        )
+
+      val result = await(
+        call(
+          controller.onSubmit(enquiryType, messageId),
+          requestWithLongContent
+        )
+      )
       result.header.status shouldBe Status.BAD_REQUEST
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByClass("error-summary-list").html() shouldBe "<li><a href=\"#reply-input\">Maximum length is 100,000</a></li>"
+      document
+        .getElementsByClass("error-summary-list")
+        .html() shouldBe "<li><a href=\"#reply-input\">Maximum length is 100,000</a></li>"
     }
   }
-
 
 }
