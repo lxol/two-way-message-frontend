@@ -1,4 +1,5 @@
 import play.sbt.routes.RoutesKeys
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
@@ -27,6 +28,7 @@ lazy val root = (project in file("."))
       "models._",
       "controllers.binders.Binders._"
     ),
+    inConfig(IntegrationTest)(scalafmtCoreSettings),
     RoutesKeys.routesImport ++= Seq("models._"),
     PlayKeys.playDefaultPort := 8990,
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
@@ -39,6 +41,7 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq("-Xfatal-warnings", "-feature"),
     libraryDependencies ++= AppDependencies(),
     retrieveManaged := true,
+    scalafmtOnCompile := true,
     evictionWarningOptions in update :=
       EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     fork in Test := true,
