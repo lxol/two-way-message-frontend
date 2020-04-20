@@ -12,7 +12,13 @@
 | ```/message/customer/:enquiryType/:replyTo/reply``` | POST   | Sends a customer 2-way message reply to HMRC |
 --------------------------------------------------------------------------------------------------------------- 
  
-
+# Before committing
+Please run the following commands before committing:
+```shell script
+sbt fmt
+sbt test
+sbt it:test
+```
 
 ### License
 
