@@ -41,9 +41,9 @@ object DateUtils {
       .map { details =>
         details.`type` match {
           case MessageType.Customer =>
-            s"You sent this message on ${messageDate}"
+            s"You sent this message on $messageDate"
           case MessageType.Adviser =>
-            s"This message was sent to you on ${messageDate}"
+            s"This message was sent to you on $messageDate"
           case _ => defaultDateText(messageDate)
         }
       }

@@ -16,8 +16,8 @@
 
 package config
 
-import com.google.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
+import com.google.inject.{ Inject, Singleton }
+import play.api.{ Configuration, Environment }
 import play.api.i18n.Lang
 import controllers.routes
 import play.api.mvc.Call
@@ -43,11 +43,10 @@ trait AppConfig {
 }
 
 @Singleton
-class FrontendAppConfig @Inject() (
-    override val runModeConfiguration: Configuration,
-    environment: Environment
-) extends AppConfig
-    with ServicesConfig {
+class FrontendAppConfig @Inject()(
+  override val runModeConfiguration: Configuration,
+  environment: Environment
+) extends AppConfig with ServicesConfig {
 
   override protected def mode = environment.mode
 

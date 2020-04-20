@@ -22,14 +22,14 @@ import akka.stream.Materializer
 import com.google.inject.Inject
 import play.api.http.HeaderNames
 import play.api.mvc._
-import uk.gov.hmrc.http.{SessionKeys, HeaderNames => HMRCHeaderNames}
+import uk.gov.hmrc.http.{ SessionKeys, HeaderNames => HMRCHeaderNames }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class SessionIdFilter(
-    override val mat: Materializer,
-    uuid: => UUID,
-    implicit val ec: ExecutionContext
+  override val mat: Materializer,
+  uuid: => UUID,
+  implicit val ec: ExecutionContext
 ) extends Filter {
 
   @Inject
@@ -38,7 +38,7 @@ class SessionIdFilter(
   }
 
   override def apply(
-      f: (RequestHeader) => Future[Result]
+    f: (RequestHeader) => Future[Result]
   )(rh: RequestHeader): Future[Result] = {
 
     lazy val sessionId: String = s"session-$uuid"
@@ -58,7 +58,7 @@ class SessionIdFilter(
 
       val headers = rh.headers.add(
         HMRCHeaderNames.xSessionId -> sessionId,
-        HeaderNames.COOKIE -> cookies
+        HeaderNames.COOKIE         -> cookies
       )
 
       f(rh.copy(headers = headers)).map { result =>

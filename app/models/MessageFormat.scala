@@ -18,7 +18,7 @@ package models
 
 import org.joda.time.LocalDate
 import play.api.libs.json._
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.{ Json, Reads }
 import models.FormId.FormId
 import models.MessageType.MessageType
 
@@ -64,17 +64,17 @@ object Adviser {
 }
 
 case class ConversationItemDetails(
-    `type`: MessageType,
-    form: FormId,
-    issueDate: Option[LocalDate],
-    replyTo: Option[String] = None,
-    enquiryType: Option[String] = None,
-    adviser: Option[Adviser] = None
+  `type`: MessageType,
+  form: FormId,
+  issueDate: Option[LocalDate],
+  replyTo: Option[String] = None,
+  enquiryType: Option[String] = None,
+  adviser: Option[Adviser] = None
 )
 
 case class ConversationItem(
-    subject: String,
-    body: Option[ConversationItemDetails],
-    validFrom: LocalDate,
-    content: Option[String]
+  subject: String,
+  body: Option[ConversationItemDetails],
+  validFrom: LocalDate,
+  content: Option[String]
 )

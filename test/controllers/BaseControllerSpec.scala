@@ -19,8 +19,8 @@ package controllers
 import com.google.inject.AbstractModule
 import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
-import models.{EnquiryDetails, Identifier, MessageError, SubmissionDetails}
+import connectors.{ PreferencesConnector, TwoWayMessageConnector }
+import models.{ EnquiryDetails, Identifier, MessageError, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
@@ -33,24 +33,17 @@ import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration, Environment}
+import play.api.{ Application, Configuration, Environment }
 import play.mvc.Http
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{
-  AuthConnector,
-  AuthProviders,
-  UnsupportedAffinityGroup
-}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, UnsupportedAffinityGroup }
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.Future
 
-class BaseControllerSpec
-    extends ControllerSpecBase
-    with MockAuthConnector
-    with I18nSupport {
+class BaseControllerSpec extends ControllerSpecBase with MockAuthConnector with I18nSupport {
 
   lazy val mockTwoWayMessageConnector = mock[TwoWayMessageConnector]
   val twmGetEnquiryTypeDetailsResponse = Json.parse(s"""{
@@ -60,16 +53,13 @@ class BaseControllerSpec
                                                        |"taxId":"AB123456C"
                                                        |}""".stripMargin)
 
-  override def fakeApplication(): Application = {
-
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .overrides(new AbstractModule with ScalaModule {
-        override def configure(): Unit = {
+        override def configure(): Unit =
           bind[TwoWayMessageConnector].toInstance(mockTwoWayMessageConnector)
-        }
       })
       .build()
-  }
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -91,9 +81,9 @@ class BaseControllerSpec
     "retrieve an identifier from the Http Response successfully" in {
       val twmPostMessageResponse =
         Json.parse("""
-          |    {
-          |     "id":"5c18eb166f0000110204b160"
-          |    }""".stripMargin)
+                     |    {
+                     |     "id":"5c18eb166f0000110204b160"
+                     |    }""".stripMargin)
 
       val identifier = Identifier("5c18eb166f0000110204b160")
       val result = controller.extractId(

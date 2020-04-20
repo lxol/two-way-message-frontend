@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.twowaymessagefrontend.util
 
-import config.{AppConfig, FrontendAppConfig}
+import config.{ AppConfig, FrontendAppConfig }
 import forms.EnquiryFormProvider
-import play.api.i18n.{Messages, MessagesApi}
+import play.api.i18n.{ Messages, MessagesApi }
 
 trait ControllerSpecBase extends SpecBase {
 

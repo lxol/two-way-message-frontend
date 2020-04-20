@@ -16,34 +16,33 @@
 
 package connectors
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import play.api.Mode.Mode
 import play.api.http.Status
-import play.api.libs.json.{JsValue, Json}
-import play.api.{Configuration, Environment}
+import play.api.libs.json.{ JsValue, Json }
+import play.api.{ Configuration, Environment }
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class PreferencesConnector @Inject() (
-    httpClient: HttpClient,
-    val runModeConfiguration: Configuration,
-    val environment: Environment,
-    val entityResolverConnector: EntityResolverConnector
+class PreferencesConnector @Inject()(
+  httpClient: HttpClient,
+  val runModeConfiguration: Configuration,
+  val environment: Environment,
+  val entityResolverConnector: EntityResolverConnector
 )(implicit ec: ExecutionContext)
-    extends Status
-    with ServicesConfig {
+    extends Status with ServicesConfig {
 
   override protected def mode: Mode = environment.mode
 
   lazy val preferencesBaseUrl: String = baseUrl("preferences")
 
   def getPreferredEmail(
-      nino: String
+    nino: String
   )(implicit headerCarrier: HeaderCarrier): Future[String] = {
 
     def verified(body: JsValue): Boolean =
@@ -54,16 +53,15 @@ class PreferencesConnector @Inject() (
     try {
       for {
         entityId <- entityResolverConnector.resolveEntityIdFromNino(Nino(nino))
-        email <-
-          httpClient
-            .GET[HttpResponse](s"$preferencesBaseUrl/preferences/$entityId")
-            .map(e => {
-              val jBody: JsValue = Json.parse(e.body)
-              if (verified(jBody) && !hasBounces(jBody)) {
-                (jBody \ "email" \ "email").as[String]
-              } else { "" }
-            })
-            .recover({ case _ => "" })
+        email <- httpClient
+                  .GET[HttpResponse](s"$preferencesBaseUrl/preferences/$entityId")
+                  .map(e => {
+                    val jBody: JsValue = Json.parse(e.body)
+                    if (verified(jBody) && !hasBounces(jBody)) {
+                      (jBody \ "email" \ "email").as[String]
+                    } else { "" }
+                  })
+                  .recover({ case _ => "" })
       } yield email
     } catch {
       case _: Throwable => Future.successful("")

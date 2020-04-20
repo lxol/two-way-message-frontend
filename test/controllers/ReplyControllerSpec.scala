@@ -19,13 +19,7 @@ package controllers
 import com.google.inject.AbstractModule
 import connectors.TwoWayMessageConnector
 import connectors.mocks.MockAuthConnector
-import models.{
-  ConversationItem,
-  Identifier,
-  MessageError,
-  ReplyDetails,
-  SubmissionDetails
-}
+import models.{ ConversationItem, Identifier, MessageError, ReplyDetails, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import play.api.Application
@@ -35,7 +29,7 @@ import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders, Enrolment}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, Enrolment }
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -44,7 +38,7 @@ import play.mvc.Http
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import utils.MessageRenderer
 
 import scala.concurrent.Future
@@ -76,8 +70,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
   when(mockTwoWayMessageConnector.getPreviousMessages(any())(any()))
     .thenReturn(Some(Html("")))
 
-  override def fakeApplication(): Application = {
-
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .overrides(new AbstractModule with ScalaModule {
         override def configure(): Unit = {
@@ -87,7 +80,6 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
         }
       })
       .build()
-  }
 
   val controller = injector.instanceOf[ReplyController]
 
@@ -126,7 +118,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
       fakeRequestWithForm.withFormUrlEncodedBody(
-        "bad" -> "value",
+        "bad"         -> "value",
         "enquiryType" -> "This will always be present"
       )
 
@@ -138,9 +130,9 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
       val twmPostMessageResponse =
         Json.parse("""
-          |    {
-          |     "id":"5c18eb166f0000110204b160"
-          |    }""".stripMargin)
+                     |    {
+                     |     "id":"5c18eb166f0000110204b160"
+                     |    }""".stripMargin)
 
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(

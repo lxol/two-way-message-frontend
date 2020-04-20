@@ -16,20 +16,20 @@
 
 package controllers.binders
 
-import models.{Identifier, MessageError}
+import models.{ Identifier, MessageError }
 import play.api.mvc.QueryStringBindable
 
 object Binders {
 
-  implicit def queryStringIdentifierBinder(implicit
-      stringBinder: QueryStringBindable[String]
-  ) =
+  implicit def queryStringIdentifierBinder(
+    implicit
+    stringBinder: QueryStringBindable[String]) =
     new QueryStringBindable[Identifier] {
 
       override def bind(
-          key: String,
-          params: Map[String, Seq[String]]
-      ): Option[Either[String, Identifier]] = {
+        key: String,
+        params: Map[String, Seq[String]]
+      ): Option[Either[String, Identifier]] =
         stringBinder.bind(key, params) match {
           case Some(idParam) =>
             idParam match {
@@ -38,23 +38,21 @@ object Binders {
             }
           case _ => None
         }
-      }
 
-      override def unbind(key: String, identifier: Identifier): String = {
+      override def unbind(key: String, identifier: Identifier): String =
         stringBinder.unbind(key, identifier.id)
-      }
 
     }
 
-  implicit def queryStringMessageErrorBinder(implicit
-      stringBinder: QueryStringBindable[String]
-  ) =
+  implicit def queryStringMessageErrorBinder(
+    implicit
+    stringBinder: QueryStringBindable[String]) =
     new QueryStringBindable[MessageError] {
 
       override def bind(
-          key: String,
-          params: Map[String, Seq[String]]
-      ): Option[Either[String, MessageError]] = {
+        key: String,
+        params: Map[String, Seq[String]]
+      ): Option[Either[String, MessageError]] =
         stringBinder.bind(key, params) match {
           case Some(errorParam) =>
             errorParam match {
@@ -63,11 +61,9 @@ object Binders {
             }
           case _ => None
         }
-      }
 
-      override def unbind(key: String, error: MessageError): String = {
+      override def unbind(key: String, error: MessageError): String =
         stringBinder.unbind(key, error.text)
-      }
     }
 
 }

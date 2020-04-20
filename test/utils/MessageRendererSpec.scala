@@ -20,16 +20,12 @@ import assets.Fixtures
 import models.MessageFormat._
 import models.ConversationItem
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Ignore, Matchers, WordSpec}
+import org.scalatest.{ Ignore, Matchers, WordSpec }
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 
 @Ignore
-class MessageRendererSpec
-    extends WordSpec
-    with MockitoSugar
-    with Fixtures
-    with Matchers {
+class MessageRendererSpec extends WordSpec with MockitoSugar with Fixtures with Matchers {
 
   val injector = new GuiceApplicationBuilder()
     .injector()

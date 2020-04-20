@@ -26,11 +26,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 
-trait SpecBase
-    extends UnitSpec
-    with GuiceOneAppPerSuite
-    with MockitoSugar
-    with Matchers {
+trait SpecBase extends UnitSpec with GuiceOneAppPerSuite with MockitoSugar with Matchers {
 
   lazy val injector: Injector = app.injector
   implicit lazy val system: ActorSystem = ActorSystem()

@@ -19,12 +19,12 @@ package models
 import play.api.libs.json._
 
 case class EnquiryDetails(
-    enquiryType: String,
-    subject: String,
-    question: String,
-    email: String,
-    telephone: String,
-    taxId: String
+  enquiryType: String,
+  subject: String,
+  question: String,
+  email: String,
+  telephone: String,
+  taxId: String
 )
 
 object EnquiryDetails {

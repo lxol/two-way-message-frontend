@@ -17,38 +17,32 @@
 package uk.gov.hmrc.twowaymessagefrontend
 
 import com.google.inject.AbstractModule
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
+import connectors.{ PreferencesConnector, TwoWayMessageConnector }
 import controllers.EnquiryController
-import models.{EnquiryDetails, SubmissionDetails}
+import models.{ EnquiryDetails, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
-import org.scalatestplus.play.{HtmlUnitFactory, OneBrowserPerSuite}
+import org.mockito.Mockito.{ reset, when }
+import org.scalatestplus.play.{ HtmlUnitFactory, OneBrowserPerSuite }
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.{ Json, Reads }
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration}
+import play.api.{ Application, Configuration }
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.twowaymessagefrontend.util.{
-  ControllerSpecBase,
-  MockAuthConnector
-}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.twowaymessagefrontend.util.{ ControllerSpecBase, MockAuthConnector }
 
 import scala.concurrent.Future
 
 class EnquiryControllerFrontendSpec
-    extends ControllerSpecBase
-    with MockAuthConnector
-    with HtmlUnitFactory
-    with OneBrowserPerSuite {
+    extends ControllerSpecBase with MockAuthConnector with HtmlUnitFactory with OneBrowserPerSuite {
 
   val preferencesConnector: PreferencesConnector = mock[PreferencesConnector]
   val twoWayMessageConnector: TwoWayMessageConnector =
@@ -76,7 +70,7 @@ class EnquiryControllerFrontendSpec
     )
   }
 
-  override def fakeApplication(): Application = {
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(Configuration("metrics.enabled" -> false))
       .overrides(new AbstractModule with ScalaModule {
@@ -87,7 +81,6 @@ class EnquiryControllerFrontendSpec
         }
       })
       .build()
-  }
 
   private val enquiryController = app.injector.instanceOf[EnquiryController]
 
@@ -358,7 +351,7 @@ class EnquiryControllerFrontendSpec
     }
   }
 
-  import play.api.test.Helpers.{GET, contentAsString}
+  import play.api.test.Helpers.{ GET, contentAsString }
 
   "back link" should {
     "go back to previous page when no parameter is passed" in {

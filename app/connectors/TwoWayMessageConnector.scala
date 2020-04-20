@@ -16,34 +16,33 @@
 
 package connectors
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import models.MessageFormat._
 import models._
 import play.api.Mode.Mode
 import play.api.http.Status
-import play.api.libs.json.{Format, JsError, Json}
-import play.api.{Configuration, Environment}
+import play.api.libs.json.{ Format, JsError, Json }
+import play.api.{ Configuration, Environment }
 import play.twirl.api.Html
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class TwoWayMessageConnector @Inject() (
-    httpClient: HttpClient,
-    override val runModeConfiguration: Configuration,
-    val environment: Environment
+class TwoWayMessageConnector @Inject()(
+  httpClient: HttpClient,
+  override val runModeConfiguration: Configuration,
+  val environment: Environment
 )(implicit ec: ExecutionContext)
-    extends Status
-    with ServicesConfig {
+    extends Status with ServicesConfig {
 
   override protected def mode: Mode = environment.mode
   lazy val twoWayMessageBaseUrl: String = baseUrl("two-way-message")
 
   def postMessage(
-      details: EnquiryDetails
+    details: EnquiryDetails
   )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessage(
       ContactDetails(details.email, Some(details.telephone)),
@@ -57,9 +56,9 @@ class TwoWayMessageConnector @Inject() (
   }
 
   def postReplyMessage(
-      details: ReplyDetails,
-      enquiryType: String,
-      replyTo: String
+    details: ReplyDetails,
+    enquiryType: String,
+    replyTo: String
   )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val message = TwoWayMessageReply(
       details.content
@@ -71,7 +70,7 @@ class TwoWayMessageConnector @Inject() (
   }
 
   def getMessages(
-      messageId: String
+    messageId: String
   )(implicit hc: HeaderCarrier): Future[List[ConversationItem]] =
     httpClient
       .GET(
@@ -89,27 +88,28 @@ class TwoWayMessageConnector @Inject() (
       }
 
   def getSubmissionDetails(
-      enquiryType: String
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    enquiryType: String
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     httpClient.GET(
       s"$twoWayMessageBaseUrl/two-way-message/message/admin/$enquiryType/details"
     )
-  }
 
   def getLatestMessage(
-      messageId: String
-  )(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    messageId: String
+  )(implicit hc: HeaderCarrier): Future[Option[Html]] =
     httpClient
       .GET(s"$twoWayMessageBaseUrl/messages/$messageId/latest-message")
-      .map { response => Some(Html(response.body)) }
-  }
+      .map { response =>
+        Some(Html(response.body))
+      }
 
   def getPreviousMessages(
-      messageId: String
-  )(implicit hc: HeaderCarrier): Future[Option[Html]] = {
+    messageId: String
+  )(implicit hc: HeaderCarrier): Future[Option[Html]] =
     httpClient
       .GET(s"$twoWayMessageBaseUrl/messages/$messageId/previous-messages")
-      .map { response => Some(Html(response.body)) }
-  }
+      .map { response =>
+        Some(Html(response.body))
+      }
 
 }

@@ -19,8 +19,8 @@ package controllers
 import com.google.inject.AbstractModule
 import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
-import models.{EnquiryDetails, Identifier, MessageError, SubmissionDetails}
+import connectors.{ PreferencesConnector, TwoWayMessageConnector }
+import models.{ EnquiryDetails, Identifier, MessageError, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
@@ -33,24 +33,17 @@ import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration, Environment}
+import play.api.{ Application, Configuration, Environment }
 import play.mvc.Http
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{
-  AuthConnector,
-  AuthProviders,
-  UnsupportedAffinityGroup
-}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, UnsupportedAffinityGroup }
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.Future
 
-class EnquiryControllerSpec
-    extends ControllerSpecBase
-    with MockAuthConnector
-    with I18nSupport {
+class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector with I18nSupport {
 
   lazy val mockTwoWayMessageConnector = mock[TwoWayMessageConnector]
   lazy val mockPreferencesConnector = mock[PreferencesConnector]
@@ -61,8 +54,7 @@ class EnquiryControllerSpec
                                                        |"taxId":"AB123456C"
                                                        |}""".stripMargin)
 
-  override def fakeApplication(): Application = {
-
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .overrides(new AbstractModule with ScalaModule {
         override def configure(): Unit = {
@@ -72,7 +64,6 @@ class EnquiryControllerSpec
         }
       })
       .build()
-  }
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -154,11 +145,11 @@ class EnquiryControllerSpec
     val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
       fakeRequestWithForm.withFormUrlEncodedBody(
         "enquiryType" -> "p800",
-        "subject" -> "subject",
-        "telephone" -> "07700 900077",
-        "email" -> "test@test.com",
-        "taxId" -> "AB123456C",
-        "question" -> "question"
+        "subject"     -> "subject",
+        "telephone"   -> "07700 900077",
+        "email"       -> "test@test.com",
+        "taxId"       -> "AB123456C",
+        "question"    -> "question"
       )
 
     val enquiryDetails = EnquiryDetails(
@@ -172,16 +163,16 @@ class EnquiryControllerSpec
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
       fakeRequestWithForm.withFormUrlEncodedBody(
-        "bad" -> "value",
+        "bad"         -> "value",
         "enquiryType" -> "p800"
       )
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials and valid payload" in {
       val twmPostMessageResponse =
         Json.parse("""
-          |    {
-          |     "id":"5c18eb166f0000110204b160"
-          |    }""".stripMargin)
+                     |    {
+                     |     "id":"5c18eb166f0000110204b160"
+                     |    }""".stripMargin)
 
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(
@@ -260,11 +251,11 @@ class EnquiryControllerSpec
       val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
         fakeRequestWithForm.withFormUrlEncodedBody(
           "enquiryType" -> "p800",
-          "subject" -> "subject",
-          "telephone" -> "07700 900077",
-          "email" -> "test@test.com",
-          "taxId" -> "AB123456C",
-          "question" -> "question"
+          "subject"     -> "subject",
+          "telephone"   -> "07700 900077",
+          "email"       -> "test@test.com",
+          "taxId"       -> "AB123456C",
+          "question"    -> "question"
         )
 
       val enquiryDetails = EnquiryDetails(
@@ -298,11 +289,11 @@ class EnquiryControllerSpec
       val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
         fakeRequestWithForm.withFormUrlEncodedBody(
           "enquiryType" -> "p800",
-          "subject" -> "a" * 66,
-          "question" -> "test",
-          "email" -> "test@test.com",
-          "telephone" -> "a" * 26,
-          "taxId" -> "AB123456C"
+          "subject"     -> "a" * 66,
+          "question"    -> "test",
+          "email"       -> "test@test.com",
+          "telephone"   -> "a" * 26,
+          "taxId"       -> "AB123456C"
         )
 
       val result = await(call(controller.onSubmit(), requestWithFormData))
@@ -323,11 +314,11 @@ class EnquiryControllerSpec
       val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
         fakeRequestWithForm.withFormUrlEncodedBody(
           "enquiryType" -> "p800",
-          "subject" -> "subject",
-          "telephone" -> "07700 900077",
-          "email" -> "test.test.com",
-          "taxId" -> "AB123456C",
-          "question" -> "question"
+          "subject"     -> "subject",
+          "telephone"   -> "07700 900077",
+          "email"       -> "test.test.com",
+          "taxId"       -> "AB123456C",
+          "question"    -> "question"
         )
 
       val result = await(call(controller.onSubmit(), requestWithFormData))
@@ -348,7 +339,7 @@ class EnquiryControllerSpec
       )
       val config = new FrontendAppConfig(configuration, env)
       enquiry_submitted(config, testMessageId, "7 days").body should include(
-        s"messageId=${testMessageId}"
+        s"messageId=$testMessageId"
       )
     }
 
@@ -361,7 +352,7 @@ class EnquiryControllerSpec
         config,
         testMessageId,
         "7 days"
-      ).body should not include (s"messageId=${testMessageId}")
+      ).body should not include (s"messageId=$testMessageId")
     }
 
     "not include messageId in a comment if perf-test-flag is missing" in {
@@ -370,7 +361,7 @@ class EnquiryControllerSpec
         config,
         testMessageId,
         "7 days"
-      ).body should not include (s"messageId=${testMessageId}")
+      ).body should not include (s"messageId=$testMessageId")
     }
 
   }

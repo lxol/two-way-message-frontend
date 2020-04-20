@@ -17,9 +17,9 @@
 package controllers
 
 import base.SpecBase
-import config.{AppConfig, FrontendAppConfig}
+import config.{ AppConfig, FrontendAppConfig }
 import forms.EnquiryFormProvider
-import play.api.i18n.{Messages, MessagesApi}
+import play.api.i18n.{ Messages, MessagesApi }
 
 trait ControllerSpecBase extends SpecBase {
 

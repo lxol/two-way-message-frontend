@@ -17,34 +17,33 @@
 package handlers
 
 import config.AppConfig
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import play.api.i18n.MessagesApi
 import play.api.mvc.Results._
-import play.api.mvc.{Request, RequestHeader, Result}
-import play.api.{Configuration, Environment, Logger}
+import play.api.mvc.{ Request, RequestHeader, Result }
+import play.api.{ Configuration, Environment, Logger }
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.http.{NotFoundException, Upstream5xxResponse}
+import uk.gov.hmrc.http.{ NotFoundException, Upstream5xxResponse }
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 import views.html.error_template
 
 @Singleton
-class ErrorHandler @Inject() (
-    val appConfig: AppConfig,
-    val messagesApi: MessagesApi,
-    val config: Configuration,
-    val env: Environment
-) extends FrontendErrorHandler
-    with AuthRedirects {
+class ErrorHandler @Inject()(
+  val appConfig: AppConfig,
+  val messagesApi: MessagesApi,
+  val config: Configuration,
+  val env: Environment
+) extends FrontendErrorHandler with AuthRedirects {
 
   override def standardErrorTemplate(
-      pageTitle: String,
-      heading: String,
-      message: String
+    pageTitle: String,
+    heading: String,
+    message: String
   )(implicit request: Request[_]) =
     error_template(pageTitle, heading, message, appConfig)
 
-  override def resolveError(rh: RequestHeader, ex: Throwable): Result = {
+  override def resolveError(rh: RequestHeader, ex: Throwable): Result =
     ex match {
       case _: MissingBearerToken =>
         Logger.debug(
@@ -79,6 +78,5 @@ class ErrorHandler @Inject() (
         )
       case _ => super.resolveError(rh, ex)
     }
-  }
 
 }

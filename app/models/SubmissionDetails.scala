@@ -16,13 +16,13 @@
 
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{ Json, OFormat }
 
 case class SubmissionDetails(
-    displayName: String,
-    responseTime: String,
-    taxIdName: String,
-    taxId: String
+  displayName: String,
+  responseTime: String,
+  taxIdName: String,
+  taxId: String
 )
 
 object SubmissionDetails {

@@ -17,33 +17,29 @@
 package controllers
 
 import config.AppConfig
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
+import connectors.{ PreferencesConnector, TwoWayMessageConnector }
 import forms.EnquiryFormProvider
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import models.EnquiryDetails
 import play.api.data._
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{ Action, AnyContent, Request, Result }
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{
-  AuthConnector,
-  AuthProviders,
-  AuthorisationException
-}
-import views.html.{enquiry, enquiry_submitted, error_template}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, AuthorisationException }
+import views.html.{ enquiry, enquiry_submitted, error_template }
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class EnquiryController @Inject() (
-    appConfig: AppConfig,
-    messagesApi: MessagesApi,
-    formProvider: EnquiryFormProvider,
-    authConnector: AuthConnector,
-    twoWayMessageConnector: TwoWayMessageConnector,
-    preferencesConnector: PreferencesConnector
+class EnquiryController @Inject()(
+  appConfig: AppConfig,
+  messagesApi: MessagesApi,
+  formProvider: EnquiryFormProvider,
+  authConnector: AuthConnector,
+  twoWayMessageConnector: TwoWayMessageConnector,
+  preferencesConnector: PreferencesConnector
 )(override implicit val ec: ExecutionContext)
     extends BaseController(
       appConfig,
@@ -56,14 +52,14 @@ class EnquiryController @Inject() (
 
   def onPageLoad(enquiryType: String): Action[AnyContent] =
     Action.async { implicit request =>
-      authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.nino) {
-        nino =>
-          for {
-            email <- nino.fold(Future.successful(""))(
-              preferencesConnector.getPreferredEmail(_)
-            )
-            submissionDetails <- getEnquiryTypeDetails(enquiryType)
-          } yield submissionDetails.fold(
+      authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.nino) { nino =>
+        for {
+          email <- nino.fold(Future.successful(""))(
+                    preferencesConnector.getPreferredEmail(_)
+                  )
+          submissionDetails <- getEnquiryTypeDetails(enquiryType)
+        } yield
+          submissionDetails.fold(
             (errorPage: Result) => errorPage,
             details =>
               Ok(
@@ -73,7 +69,7 @@ class EnquiryController @Inject() (
                   EnquiryDetails(enquiryType, "", "", email, "", details.taxId),
                   details.responseTime
                 )
-              )
+            )
           )
       } recoverWith {
         case _: AuthorisationException => Future.successful(Unauthorized)
@@ -112,8 +108,8 @@ class EnquiryController @Inject() (
     }
 
   def submitMessage(enquiryDetails: EnquiryDetails, responseTime: String)(
-      implicit request: Request[_]
-  ): Future[Result] = {
+    implicit request: Request[_]
+  ): Future[Result] =
     twoWayMessageConnector
       .postMessage(enquiryDetails)
       .map(response =>
@@ -141,9 +137,7 @@ class EnquiryController @Inject() (
                 appConfig
               )
             )
-        }
-      )
-  }
+      })
 
   def messagesRedirect: Action[AnyContent] =
     Action {
@@ -156,9 +150,9 @@ class EnquiryController @Inject() (
     }
 
   private def rebuildFailedForm(
-      formWithErrors: Form[EnquiryDetails],
-      taxId: String
-  ) = {
+    formWithErrors: Form[EnquiryDetails],
+    taxId: String
+  ) =
     EnquiryDetails(
       formWithErrors.data.getOrElse("enquiryType", ""),
       formWithErrors.data.getOrElse("subject", ""),
@@ -167,5 +161,4 @@ class EnquiryController @Inject() (
       formWithErrors.data.getOrElse("telephone", ""),
       taxId
     )
-  }
 }

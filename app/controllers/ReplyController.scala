@@ -19,28 +19,28 @@ package controllers
 import config.AppConfig
 import connectors.TwoWayMessageConnector
 import forms.ReplyFormProvider
-import javax.inject.{Inject, Singleton}
-import models.{Identifier, MessageError, ReplyDetails, SubmissionDetails}
+import javax.inject.{ Inject, Singleton }
+import models.{ Identifier, MessageError, ReplyDetails, SubmissionDetails }
 import play.api.data._
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{ Action, AnyContent, Request, Result }
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders }
 import utils.MessageRenderer
-import views.html.{enquiry_submitted, error_template, reply}
+import views.html.{ enquiry_submitted, error_template, reply }
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class ReplyController @Inject() (
-    appConfig: AppConfig,
-    authConnector: AuthConnector,
-    messagesApi: MessagesApi,
-    twoWayMessageConnector: TwoWayMessageConnector,
-    formProvider: ReplyFormProvider,
-    messageRenderer: MessageRenderer
+class ReplyController @Inject()(
+  appConfig: AppConfig,
+  authConnector: AuthConnector,
+  messagesApi: MessagesApi,
+  twoWayMessageConnector: TwoWayMessageConnector,
+  formProvider: ReplyFormProvider,
+  messageRenderer: MessageRenderer
 )(override implicit val ec: ExecutionContext)
     extends BaseController(
       appConfig,
@@ -56,7 +56,7 @@ class ReplyController @Inject() (
       authorised(AuthProviders(GovernmentGateway)) {
         for {
           before <- twoWayMessageConnector.getLatestMessage(replyTo)
-          after <- twoWayMessageConnector.getPreviousMessages(replyTo)
+          after  <- twoWayMessageConnector.getPreviousMessages(replyTo)
         } yield {
           Ok(
             reply(
@@ -83,18 +83,19 @@ class ReplyController @Inject() (
               val returnedErrorForm = formWithErrors
               for {
                 before <- twoWayMessageConnector.getLatestMessage(replyTo)
-                after <- twoWayMessageConnector.getPreviousMessages(replyTo)
-              } yield BadRequest(
-                reply(
-                  enquiryType,
-                  replyTo,
-                  appConfig,
-                  returnedErrorForm,
-                  rebuildFailedForm(formWithErrors),
-                  before.getOrElse(Html("")),
-                  after.getOrElse(Html(""))
+                after  <- twoWayMessageConnector.getPreviousMessages(replyTo)
+              } yield
+                BadRequest(
+                  reply(
+                    enquiryType,
+                    replyTo,
+                    appConfig,
+                    returnedErrorForm,
+                    rebuildFailedForm(formWithErrors),
+                    before.getOrElse(Html("")),
+                    after.getOrElse(Html(""))
+                  )
                 )
-              )
             },
             replyDetails => submitMessage(enquiryType, replyDetails, replyTo)
           )
@@ -102,10 +103,10 @@ class ReplyController @Inject() (
     }
 
   def submitMessage(
-      enquiryType: String,
-      replyDetails: ReplyDetails,
-      replyTo: String
-  )(implicit request: Request[_]): Future[Result] = {
+    enquiryType: String,
+    replyDetails: ReplyDetails,
+    replyTo: String
+  )(implicit request: Request[_]): Future[Result] =
     getEnquiryTypeDetails(enquiryType).flatMap {
       case Right(details) =>
         twoWayMessageConnector
@@ -151,11 +152,9 @@ class ReplyController @Inject() (
           }
       case Left(errorPage) => Future.successful(errorPage)
     }
-  }
 
-  private def rebuildFailedForm(formWithErrors: Form[ReplyDetails]) = {
+  private def rebuildFailedForm(formWithErrors: Form[ReplyDetails]) =
     ReplyDetails(
       formWithErrors.data.getOrElse("reply-input", "")
     )
-  }
 }

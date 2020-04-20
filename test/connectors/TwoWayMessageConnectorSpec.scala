@@ -23,28 +23,27 @@ import models.MessageFormat._
 import models._
 import net.codingwell.scalaguice.ScalaModule
 import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.{any, _}
+import org.mockito.ArgumentMatchers.{ any, _ }
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import play.api.Mode.Mode
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{Json, Writes}
-import play.api.{Application, Mode}
+import play.api.libs.json.{ Json, Writes }
+import play.api.{ Application, Mode }
 import play.mvc.Http
 import play.twirl.api.Html
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
 
   lazy implicit val hc = new HeaderCarrier()
   lazy val mockHttpClient = mock[HttpClient]
 
-  override def fakeApplication(): Application = {
-
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .overrides(new AbstractModule with ScalaModule {
         override def configure(): Unit = {
@@ -53,7 +52,6 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
         }
       })
       .build()
-  }
 
   val twoWayMessageConnector = injector.instanceOf[TwoWayMessageConnector]
 
@@ -61,9 +59,9 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
 
     val twmPostMessageResponse =
       Json.parse("""
-        |    {
-        |     "id":"5c18eb166f0000110204b160"
-        |    }""".stripMargin)
+                   |    {
+                   |     "id":"5c18eb166f0000110204b160"
+                   |    }""".stripMargin)
 
     val details = EnquiryDetails(
       "some-enquiry-type",
@@ -128,9 +126,9 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
   "postReplyMessage" should {
     val twmPostMessageResponse =
       Json.parse("""
-        |    {
-        |     "id":"5c18eb166f0000110204b160"
-        |    }""".stripMargin)
+                   |    {
+                   |     "id":"5c18eb166f0000110204b160"
+                   |    }""".stripMargin)
 
     val details = EnquiryDetails(
       "some-enquiry-type",
@@ -206,7 +204,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messages: List[ConversationItem] =
         Json.parse(messagesStr).validate[List[ConversationItem]].get
       when(
-        mockHttpClient.GET(endsWith(s"/message/messages-list/${messageId}"))(
+        mockHttpClient.GET(endsWith(s"/message/messages-list/$messageId"))(
           rds = any[HttpReads[HttpResponse]],
           hc = any[HeaderCarrier],
           ec = any[ExecutionContext]
@@ -226,7 +224,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messageId = "1234567890"
       val invalidMessagesStr = "{}"
       when(
-        mockHttpClient.GET(endsWith(s"/message/messages-list/${messageId}"))(
+        mockHttpClient.GET(endsWith(s"/message/messages-list/$messageId"))(
           rds = any[HttpReads[HttpResponse]],
           hc = any[HeaderCarrier],
           ec = any[ExecutionContext]
@@ -254,7 +252,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messageId = "1234567890"
       val testMessage = "test exception"
       when(
-        mockHttpClient.GET(endsWith(s"/message/messages-list/${messageId}"))(
+        mockHttpClient.GET(endsWith(s"/message/messages-list/$messageId"))(
           rds = any[HttpReads[HttpResponse]],
           hc = any[HeaderCarrier],
           ec = any[ExecutionContext]
@@ -275,7 +273,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messageId = "1234567890"
       val messageStr = "top message rendered"
       when(
-        mockHttpClient.GET(endsWith(s"/messages/${messageId}/latest-message"))(
+        mockHttpClient.GET(endsWith(s"/messages/$messageId/latest-message"))(
           rds = any[HttpReads[HttpResponse]],
           hc = any[HeaderCarrier],
           ec = any[ExecutionContext]
@@ -294,7 +292,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messageId = "1234567890"
       val testMessage = "test exception"
       when(
-        mockHttpClient.GET(endsWith(s"/messages/${messageId}/latest-message"))(
+        mockHttpClient.GET(endsWith(s"/messages/$messageId/latest-message"))(
           rds = any[HttpReads[HttpResponse]],
           hc = any[HeaderCarrier],
           ec = any[ExecutionContext]
@@ -317,7 +315,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val messageStr = "rest of the messages rendered"
       when(
         mockHttpClient
-          .GET(endsWith(s"/messages/${messageId}/previous-messages"))(
+          .GET(endsWith(s"/messages/$messageId/previous-messages"))(
             rds = any[HttpReads[HttpResponse]],
             hc = any[HeaderCarrier],
             ec = any[ExecutionContext]
@@ -337,7 +335,7 @@ class TwoWayMessageConnectorSpec extends SpecBase with Fixtures {
       val testMessage = "test exception"
       when(
         mockHttpClient
-          .GET(endsWith(s"/messages/${messageId}/previous-messages"))(
+          .GET(endsWith(s"/messages/$messageId/previous-messages"))(
             rds = any[HttpReads[HttpResponse]],
             hc = any[HeaderCarrier],
             ec = any[ExecutionContext]

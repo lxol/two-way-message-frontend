@@ -23,7 +23,7 @@ import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.ArgumentMatchers
@@ -31,13 +31,9 @@ import org.mockito.Mockito.when
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.Nino
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
-class PreferencesConnectorSpec
-    extends PlaySpec
-    with GuiceOneServerPerSuite
-    with MockitoSugar
-    with Eventually {
+class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with Eventually {
 
   lazy implicit val hc = new HeaderCarrier()
 

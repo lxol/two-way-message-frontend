@@ -18,7 +18,7 @@ package models
 
 import org.apache.commons.codec.binary.Base64
 import org.scalatest.FunSuite
-import play.api.libs.json.{Json, _}
+import play.api.libs.json.{ Json, _ }
 
 class TwoWayMessageSpec extends FunSuite {
 
@@ -26,15 +26,15 @@ class TwoWayMessageSpec extends FunSuite {
 
   val expectedJson =
     Json.parse("""
-      |{
-      | "contactDetails":
-      | {
-      |   "email":"test@test.com",
-      |   "telephone":"07700 900077"
-      | },
-      | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
-      | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
-      | }
+                 |{
+                 | "contactDetails":
+                 | {
+                 |   "email":"test@test.com",
+                 |   "telephone":"07700 900077"
+                 | },
+                 | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
+                 | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
+                 | }
     """.stripMargin)
 
   test("TwoWayMessage should escape HTML subject content correctly") {

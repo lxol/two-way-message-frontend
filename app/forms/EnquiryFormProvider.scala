@@ -18,12 +18,12 @@ package forms
 
 import javax.inject.Inject
 import models.EnquiryDetails
-import play.api.data.{Form, Forms, Mapping}
+import play.api.data.{ Form, Forms, Mapping }
 import play.api.data.Forms._
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.data.validation.{ Constraint, Invalid, Valid, ValidationError }
+import play.api.i18n.{ Lang, Messages, MessagesApi }
 
-class EnquiryFormProvider @Inject() (messagesApi: MessagesApi) {
+class EnquiryFormProvider @Inject()(messagesApi: MessagesApi) {
 
   val messages = messagesApi.preferred(Seq(Lang("en")))
   def apply(): Form[EnquiryDetails] =
@@ -41,13 +41,12 @@ class EnquiryFormProvider @Inject() (messagesApi: MessagesApi) {
       )(EnquiryDetails.apply)(EnquiryDetails.unapply)
     )
 
-  def nonEmptyTextWithError(error: String): Mapping[String] = {
+  def nonEmptyTextWithError(error: String): Mapping[String] =
     Forms.text verifying Constraint[String]("constraint.required") { o =>
       if (o == null) Invalid(ValidationError(error))
       else if (o.trim.isEmpty) Invalid(ValidationError(error))
       else Valid
     }
-  }
 
   val subjectConstraint: Constraint[String] =
     Constraint("constraints.subject")({ plainText =>

@@ -17,7 +17,7 @@
 package models
 
 import org.scalatest._
-import play.api.libs.json.{Json, _}
+import play.api.libs.json.{ Json, _ }
 import models.MessageFormat._
 import assets.Fixtures
 
@@ -26,7 +26,7 @@ class MessageFormatSpec extends WordSpec with Fixtures with Matchers {
   "Message json reader" should {
     "read conversation item as defined in message microservice " in {
       val id = "123456"
-      val json = Json.parse(conversationItem(s"${id}"))
+      val json = Json.parse(conversationItem(s"$id"))
       val messageResult = json.validate[ConversationItem]
       messageResult shouldBe a[JsSuccess[_]]
       messageResult.get shouldBe a[ConversationItem]
