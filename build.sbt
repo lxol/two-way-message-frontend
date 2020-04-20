@@ -28,7 +28,16 @@ lazy val root = (project in file("."))
       "models._",
       "controllers.binders.Binders._"
     ),
-    inConfig(IntegrationTest)(scalafmtCoreSettings),
+    inConfig(IntegrationTest)(scalafmtCoreSettings ++
+       Seq(
+         compileInputs in compile := Def.taskDyn {
+           val task = test in (resolvedScoped.value.scope in scalafmt.key)
+           val previousInputs = (compileInputs in compile).value
+           task.map(_ => previousInputs)
+         }.value
+       )
+    ),
+    scalafmtTestOnCompile in ThisBuild := true,
     RoutesKeys.routesImport ++= Seq("models._"),
     PlayKeys.playDefaultPort := 8990,
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
@@ -41,7 +50,6 @@ lazy val root = (project in file("."))
     scalacOptions ++= Seq("-Xfatal-warnings", "-feature"),
     libraryDependencies ++= AppDependencies(),
     retrieveManaged := true,
-    scalafmtOnCompile := true,
     evictionWarningOptions in update :=
       EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     fork in Test := true,
