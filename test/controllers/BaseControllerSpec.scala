@@ -19,8 +19,8 @@ package controllers
 import com.google.inject.AbstractModule
 import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
-import connectors.{PreferencesConnector, TwoWayMessageConnector}
-import models.{EnquiryDetails, Identifier, MessageError, SubmissionDetails}
+import connectors.{ PreferencesConnector, TwoWayMessageConnector }
+import models.{ EnquiryDetails, Identifier, MessageError, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
@@ -33,13 +33,13 @@ import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration, Environment}
+import play.api.{ Application, Configuration, Environment }
 import play.mvc.Http
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders, UnsupportedAffinityGroup}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, UnsupportedAffinityGroup }
 import uk.gov.hmrc.domain.Nino
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.Future
 
@@ -53,22 +53,25 @@ class BaseControllerSpec extends ControllerSpecBase with MockAuthConnector with 
                                                        |"taxId":"AB123456C"
                                                        |}""".stripMargin)
 
-  override def fakeApplication(): Application = {
-
+  override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .overrides(new AbstractModule with ScalaModule {
-        override def configure(): Unit = {
+        override def configure(): Unit =
           bind[TwoWayMessageConnector].toInstance(mockTwoWayMessageConnector)
-        }
       })
       .build()
-  }
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockTwoWayMessageConnector)
-    when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
-      Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))))
+    when(
+      mockTwoWayMessageConnector
+        .getSubmissionDetails(any[String])(any[HeaderCarrier])
+    ).thenReturn(
+      Future.successful(
+        HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))
+      )
+    )
   }
 
   val controller = injector.instanceOf[EnquiryController]
@@ -76,20 +79,24 @@ class BaseControllerSpec extends ControllerSpecBase with MockAuthConnector with 
   "extractId" should {
 
     "retrieve an identifier from the Http Response successfully" in {
-      val twmPostMessageResponse = Json.parse(
-        """
-          |    {
-          |     "id":"5c18eb166f0000110204b160"
-          |    }""".stripMargin)
+      val twmPostMessageResponse =
+        Json.parse("""
+                     |    {
+                     |     "id":"5c18eb166f0000110204b160"
+                     |    }""".stripMargin)
 
       val identifier = Identifier("5c18eb166f0000110204b160")
-      val result = controller.extractId(HttpResponse(Status.CREATED, Some(twmPostMessageResponse)))
+      val result = controller.extractId(
+        HttpResponse(Status.CREATED, Some(twmPostMessageResponse))
+      )
       result.right.get shouldBe identifier
     }
 
     "retrieve an error message if an id isn't provided or malformed json" in {
       val bad2wmPostMessageResponse = Json.parse("{}")
-      val result = controller.extractId(HttpResponse(Status.CREATED, Some(bad2wmPostMessageResponse)))
+      val result = controller.extractId(
+        HttpResponse(Status.CREATED, Some(bad2wmPostMessageResponse))
+      )
       result.left.get shouldBe MessageError("Missing reference")
     }
   }
@@ -97,37 +104,65 @@ class BaseControllerSpec extends ControllerSpecBase with MockAuthConnector with 
   "getEnquiryTypeDetails" should {
 
     "return submission details from the Http Response if the call to getEnquiryTypeDetails in two-way-message returns OK" in {
-      when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
-        Future.successful(HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))))
-      val result = await(controller.getEnquiryTypeDetails("p800-overpayment")).right.get
-      result shouldBe SubmissionDetails("P800 overpayment enquiry", "5 days", "nino", "AB123456C")
+      when(
+        mockTwoWayMessageConnector
+          .getSubmissionDetails(any[String])(any[HeaderCarrier])
+      ).thenReturn(
+        Future.successful(
+          HttpResponse(Status.OK, Some(twmGetEnquiryTypeDetailsResponse))
+        )
+      )
+      val result =
+        await(controller.getEnquiryTypeDetails("p800-overpayment")).right.get
+      result shouldBe SubmissionDetails(
+        "P800 overpayment enquiry",
+        "5 days",
+        "nino",
+        "AB123456C"
+      )
     }
 
     "return an error page from the Http Response if the call to getEnquiryTypeDetails in 2wsm returns Ok with an invalid body" in {
-      when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
-        Future.successful(HttpResponse(Status.OK, Some(Json.parse("""{"invalid": "json body"}""")))))
-      val result = await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
+      when(
+        mockTwoWayMessageConnector
+          .getSubmissionDetails(any[String])(any[HeaderCarrier])
+      ).thenReturn(
+        Future.successful(
+          HttpResponse(
+            Status.OK,
+            Some(Json.parse("""{"invalid": "json body"}"""))
+          )
+        )
+      )
+      val result =
+        await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
-      document.html() should include ("Unknown enquiry type: p800-overpayment")
+      document.html() should include("Unknown enquiry type: p800-overpayment")
     }
 
     "return an error page from the Http Response if the call to getEnquiryTypeDetails in two-way-message returns FORBIDDEN" in {
-      when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
-        Future.successful(HttpResponse(Status.FORBIDDEN)))
-      val result = await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
+      when(
+        mockTwoWayMessageConnector
+          .getSubmissionDetails(any[String])(any[HeaderCarrier])
+      ).thenReturn(Future.successful(HttpResponse(Status.FORBIDDEN)))
+      val result =
+        await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
-      document.html() should include ("Not authenticated")
+      document.html() should include("Not authenticated")
     }
 
     "return an error page from the Http Response if the call to getEnquiryTypeDetails in two-way-message returns NOT_FOUND" in {
-      when(mockTwoWayMessageConnector.getSubmissionDetails(any[String])(any[HeaderCarrier])).thenReturn(
-        Future.successful(HttpResponse(Status.NOT_FOUND)))
-      val result = await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
+      when(
+        mockTwoWayMessageConnector
+          .getSubmissionDetails(any[String])(any[HeaderCarrier])
+      ).thenReturn(Future.successful(HttpResponse(Status.NOT_FOUND)))
+      val result =
+        await(controller.getEnquiryTypeDetails("p800-overpayment")).left.get
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
-      document.html() should include ("Unknown enquiry type: p800-overpayment")
+      document.html() should include("Unknown enquiry type: p800-overpayment")
     }
   }
 }

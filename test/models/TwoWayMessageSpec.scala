@@ -18,27 +18,32 @@ package models
 
 import org.apache.commons.codec.binary.Base64
 import org.scalatest.FunSuite
-import play.api.libs.json.{Json, _}
+import play.api.libs.json.{ Json, _ }
 
 class TwoWayMessageSpec extends FunSuite {
 
   import models.TwoWayMessage._
 
-  val expectedJson = Json.parse(
-    """
-      |{
-      | "contactDetails":
-      | {
-      |   "email":"test@test.com",
-      |   "telephone":"07700 900077"
-      | },
-      | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
-      | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
-      | }
+  val expectedJson =
+    Json.parse("""
+                 |{
+                 | "contactDetails":
+                 | {
+                 |   "email":"test@test.com",
+                 |   "telephone":"07700 900077"
+                 | },
+                 | "subject":"&lt;b&gt;Hello &amp; World&lt;/b&gt;",
+                 | "content":"PHA+U29tZSBjb250ZW50PC9wPg=="
+                 | }
     """.stripMargin)
 
   test("TwoWayMessage should escape HTML subject content correctly") {
-    val twoWayMessage = TwoWayMessage(ContactDetails("test@test.com", Some("07700 900077")),"<b>Hello & World</b>","Some content",None)
+    val twoWayMessage = TwoWayMessage(
+      ContactDetails("test@test.com", Some("07700 900077")),
+      "<b>Hello & World</b>",
+      "Some content",
+      None
+    )
     val json = Json.toJson(twoWayMessage)
     assert(json === expectedJson)
   }
@@ -49,7 +54,7 @@ class TwoWayMessageSpec extends FunSuite {
     val twoWayMessageReply = TwoWayMessageReply("Hello World")
     val json = Json.toJson(twoWayMessageReply)
 
-    assert( json.toString === """{"content":"PHA+SGVsbG8gV29ybGQ8L3A+"}""")
+    assert(json.toString === """{"content":"PHA+SGVsbG8gV29ybGQ8L3A+"}""")
   }
 
   test("HTMLEncode - check CR are replaced with <br>") {
@@ -58,21 +63,33 @@ class TwoWayMessageSpec extends FunSuite {
         |World""".stripMargin
 
     val result = HTMLEncoder.encode(s)
-    assert(new String(Base64.decodeBase64(result.getBytes("UTF-8"))) ===  "<p>Hello<br/>World</p>")
+    assert(
+      new String(
+        Base64.decodeBase64(result.getBytes("UTF-8"))
+      ) === "<p>Hello<br/>World</p>"
+    )
   }
 
   test("HTMLEncode - check ampersand") {
     val s = """Hello & World"""
 
     val result = HTMLEncoder.encode(s)
-    assert(new String(Base64.decodeBase64(result.getBytes("UTF-8"))) === "<p>Hello &amp; World</p>")
+    assert(
+      new String(
+        Base64.decodeBase64(result.getBytes("UTF-8"))
+      ) === "<p>Hello &amp; World</p>"
+    )
   }
 
   test("HTMLEncode - check angled brackets") {
     val s = """Hello <World>"""
 
     val result = HTMLEncoder.encode(s)
-    assert( new String(Base64.decodeBase64(result.getBytes("UTF-8"))) === "<p>Hello &lt;World&gt;</p>")
+    assert(
+      new String(
+        Base64.decodeBase64(result.getBytes("UTF-8"))
+      ) === "<p>Hello &lt;World&gt;</p>"
+    )
   }
 
   test("HTMLEncode - encoding") {

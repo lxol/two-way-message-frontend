@@ -19,81 +19,142 @@ package controllers
 import config.AppConfig
 import connectors.TwoWayMessageConnector
 import forms.ReplyFormProvider
-import javax.inject.{Inject, Singleton}
-import models.{Identifier, MessageError, ReplyDetails, SubmissionDetails}
+import javax.inject.{ Inject, Singleton }
+import models.{ Identifier, MessageError, ReplyDetails, SubmissionDetails }
 import play.api.data._
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{ Action, AnyContent, Request, Result }
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
+import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders }
 import utils.MessageRenderer
-import views.html.{enquiry_submitted, error_template, reply}
+import views.html.{ enquiry_submitted, error_template, reply }
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
-class ReplyController @Inject()(appConfig: AppConfig,
-                                authConnector: AuthConnector,
-                                messagesApi: MessagesApi,
-                                twoWayMessageConnector: TwoWayMessageConnector,
-                                formProvider: ReplyFormProvider,
-                                messageRenderer: MessageRenderer
-                                )(override implicit val ec: ExecutionContext)
-  extends BaseController(appConfig, authConnector, messagesApi, twoWayMessageConnector) {
+class ReplyController @Inject()(
+  appConfig: AppConfig,
+  authConnector: AuthConnector,
+  messagesApi: MessagesApi,
+  twoWayMessageConnector: TwoWayMessageConnector,
+  formProvider: ReplyFormProvider,
+  messageRenderer: MessageRenderer
+)(override implicit val ec: ExecutionContext)
+    extends BaseController(
+      appConfig,
+      authConnector,
+      messagesApi,
+      twoWayMessageConnector
+    ) {
 
   val form: Form[ReplyDetails] = formProvider()
 
-  def onPageLoad(enquiryType: String, replyTo: String): Action[AnyContent] = Action.async {
-    implicit request =>
+  def onPageLoad(enquiryType: String, replyTo: String): Action[AnyContent] =
+    Action.async { implicit request =>
       authorised(AuthProviders(GovernmentGateway)) {
         for {
           before <- twoWayMessageConnector.getLatestMessage(replyTo)
-          after <- twoWayMessageConnector.getPreviousMessages(replyTo)
+          after  <- twoWayMessageConnector.getPreviousMessages(replyTo)
         } yield {
-          Ok(reply(enquiryType, replyTo, appConfig, form, ReplyDetails(""), before.getOrElse(Html("")), after.getOrElse(Html(""))))
+          Ok(
+            reply(
+              enquiryType,
+              replyTo,
+              appConfig,
+              form,
+              ReplyDetails(""),
+              before.getOrElse(Html("")),
+              after.getOrElse(Html(""))
+            )
+          )
         }
       }
     }
 
-  def onSubmit(enquiryType: String, replyTo: String): Action[AnyContent] = Action.async {
-    implicit request =>
+  def onSubmit(enquiryType: String, replyTo: String): Action[AnyContent] =
+    Action.async { implicit request =>
       authorised(AuthProviders(GovernmentGateway)) {
-        form.bindFromRequest().fold(
-          (formWithErrors: Form[ReplyDetails]) => {
-            val returnedErrorForm = formWithErrors
-            for {
-              before <- twoWayMessageConnector.getLatestMessage(replyTo)
-              after <- twoWayMessageConnector.getPreviousMessages(replyTo)
-            } yield BadRequest(reply(
-              enquiryType, replyTo, appConfig, returnedErrorForm, rebuildFailedForm(formWithErrors), before.getOrElse(Html("")), after.getOrElse(Html(""))))
-          },
-          replyDetails =>
-            submitMessage(enquiryType, replyDetails, replyTo)
-        )
+        form
+          .bindFromRequest()
+          .fold(
+            (formWithErrors: Form[ReplyDetails]) => {
+              val returnedErrorForm = formWithErrors
+              for {
+                before <- twoWayMessageConnector.getLatestMessage(replyTo)
+                after  <- twoWayMessageConnector.getPreviousMessages(replyTo)
+              } yield
+                BadRequest(
+                  reply(
+                    enquiryType,
+                    replyTo,
+                    appConfig,
+                    returnedErrorForm,
+                    rebuildFailedForm(formWithErrors),
+                    before.getOrElse(Html("")),
+                    after.getOrElse(Html(""))
+                  )
+                )
+            },
+            replyDetails => submitMessage(enquiryType, replyDetails, replyTo)
+          )
       }
     }
 
-  def submitMessage(enquiryType: String, replyDetails: ReplyDetails, replyTo: String)(implicit request: Request[_]): Future[Result] = {
+  def submitMessage(
+    enquiryType: String,
+    replyDetails: ReplyDetails,
+    replyTo: String
+  )(implicit request: Request[_]): Future[Result] =
     getEnquiryTypeDetails(enquiryType).flatMap {
       case Right(details) =>
-        twoWayMessageConnector.postReplyMessage(replyDetails, enquiryType, replyTo).flatMap { response =>
-          response.status match {
-            case CREATED => extractId(response) match {
-              case Right(id) => Future.successful(Ok(enquiry_submitted(appConfig, id.id, details.responseTime)))
-              case Left(error) => Future.successful(Ok(error_template("Error", "There was an error:", error.text, appConfig)))
+        twoWayMessageConnector
+          .postReplyMessage(replyDetails, enquiryType, replyTo)
+          .flatMap { response =>
+            response.status match {
+              case CREATED =>
+                extractId(response) match {
+                  case Right(id) =>
+                    Future.successful(
+                      Ok(
+                        enquiry_submitted(
+                          appConfig,
+                          id.id,
+                          details.responseTime
+                        )
+                      )
+                    )
+                  case Left(error) =>
+                    Future.successful(
+                      Ok(
+                        error_template(
+                          "Error",
+                          "There was an error:",
+                          error.text,
+                          appConfig
+                        )
+                      )
+                    )
+                }
+              case _ =>
+                Future.successful(
+                  Ok(
+                    error_template(
+                      "Error",
+                      "There was an error:",
+                      "Error sending reply details",
+                      appConfig
+                    )
+                  )
+                )
             }
-            case _ => Future.successful(Ok(error_template("Error", "There was an error:", "Error sending reply details", appConfig)))
           }
-        }
       case Left(errorPage) => Future.successful(errorPage)
     }
-  }
 
-  private def rebuildFailedForm(formWithErrors: Form[ReplyDetails]) = {
+  private def rebuildFailedForm(formWithErrors: Form[ReplyDetails]) =
     ReplyDetails(
       formWithErrors.data.getOrElse("reply-input", "")
     )
-  }
 }

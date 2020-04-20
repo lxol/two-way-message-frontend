@@ -17,7 +17,7 @@ object AppDependencies {
     "uk.gov.hmrc" %% "play-language" % "3.4.0",
     "uk.gov.hmrc" %% "play-whitelist-filter" % "2.0.0",
     "net.codingwell" %% "scala-guice" % "4.2.2",
-    "uk.gov.hmrc" %% "domain"  % "5.6.0-play-25"
+    "uk.gov.hmrc" %% "domain" % "5.6.0-play-25"
   )
 
   val test = Seq(

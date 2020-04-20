@@ -18,7 +18,7 @@ package models
 
 import org.joda.time.LocalDate
 import play.api.libs.json._
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.{ Json, Reads }
 import models.FormId.FormId
 import models.MessageType.MessageType
 
@@ -29,15 +29,17 @@ object MessageFormat {
       Reads.enumNameReads(FormId),
       Writes.enumNameWrites
     )
-    implicit val messageTypeFormat: Format[MessageType] =
-        Format(
-            Reads.enumNameReads(MessageType),
-            Writes.enumNameWrites
-        )
+  implicit val messageTypeFormat: Format[MessageType] =
+    Format(
+      Reads.enumNameReads(MessageType),
+      Writes.enumNameWrites
+    )
 
-  implicit val conversationItemDetailsFormat: Format[ConversationItemDetails] = Json.format[ConversationItemDetails]
+  implicit val conversationItemDetailsFormat: Format[ConversationItemDetails] =
+    Json.format[ConversationItemDetails]
 
-  implicit val conversationItemFormat: Format[ConversationItem] = Json.format[ConversationItem]
+  implicit val conversationItemFormat: Format[ConversationItem] =
+    Json.format[ConversationItem]
 
 }
 
@@ -50,10 +52,10 @@ object FormId extends Enumeration {
 }
 object MessageType extends Enumeration {
 
-    type MessageType = Value
+  type MessageType = Value
 
-    val Adviser = Value("2wsm-advisor")
-    val Customer = Value("2wsm-customer")
+  val Adviser = Value("2wsm-advisor")
+  val Customer = Value("2wsm-customer")
 }
 
 case class Adviser(pidId: String)
@@ -71,8 +73,8 @@ case class ConversationItemDetails(
 )
 
 case class ConversationItem(
-                               subject: String,
-                               body: Option[ConversationItemDetails],
-                               validFrom: LocalDate,
-                               content: Option[String]
+  subject: String,
+  body: Option[ConversationItemDetails],
+  validFrom: LocalDate,
+  content: Option[String]
 )

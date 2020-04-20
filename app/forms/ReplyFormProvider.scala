@@ -21,7 +21,7 @@ import models.ReplyDetails
 import play.api.data.Form
 import play.api.data.Forms._
 
-class ReplyFormProvider   {
+class ReplyFormProvider {
   private val CONTENT_MAX_LENGTH = 100000
 
   def apply(): Form[ReplyDetails] =

@@ -20,24 +20,26 @@ import assets.Fixtures
 import models.MessageFormat._
 import models.ConversationItem
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Ignore, Matchers, WordSpec}
+import org.scalatest.{ Ignore, Matchers, WordSpec }
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 
 @Ignore
-class MessageRendererSpec extends WordSpec  with MockitoSugar with  Fixtures with Matchers  {
+class MessageRendererSpec extends WordSpec with MockitoSugar with Fixtures with Matchers {
 
   val injector = new GuiceApplicationBuilder()
     .injector()
-    val messageRenderingService = injector.instanceOf[MessageRenderer]
+  val messageRenderingService = injector.instanceOf[MessageRenderer]
 
-    "MessageRenderingService.renderMessage" should {
-            "render one message " in {
-            val messageId = "12345"
-            val messages = List(Json.parse(conversationItem(messageId)).validate[ConversationItem].get)
+  "MessageRenderingService.renderMessage" should {
+    "render one message " in {
+      val messageId = "12345"
+      val messages = List(
+        Json.parse(conversationItem(messageId)).validate[ConversationItem].get
+      )
 
-            val result = messageRenderingService.renderMessages(messages)
-            result should be("<h1>")
-            }
-        }
+      val result = messageRenderingService.renderMessages(messages)
+      result should be("<h1>")
+    }
+  }
 }

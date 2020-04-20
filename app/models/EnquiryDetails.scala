@@ -18,8 +18,14 @@ package models
 
 import play.api.libs.json._
 
-case class EnquiryDetails(enquiryType: String, subject: String, question: String, email: String, telephone: String, taxId: String)
-
+case class EnquiryDetails(
+  enquiryType: String,
+  subject: String,
+  question: String,
+  email: String,
+  telephone: String,
+  taxId: String
+)
 
 object EnquiryDetails {
   implicit val format = Json.format[EnquiryDetails]

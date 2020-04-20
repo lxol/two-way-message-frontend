@@ -18,10 +18,10 @@ package models
 
 import org.apache.commons.codec.binary.Base64
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{Json, Writes, _}
+import play.api.libs.json.{ Json, Writes, _ }
 import play.twirl.api.HtmlFormat
 
-import scala.xml.{Node, NodeBuffer, Text}
+import scala.xml.{ Node, NodeBuffer, Text }
 
 case class ContactDetails(email: String, telephone: Option[String])
 
@@ -30,7 +30,12 @@ object ContactDetails {
   implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 
-case class TwoWayMessage(contactDetails: ContactDetails, subject: String, content: String, replyTo: Option[String] = None)
+case class TwoWayMessage(
+  contactDetails: ContactDetails,
+  subject: String,
+  content: String,
+  replyTo: Option[String] = None
+)
 
 object TwoWayMessage {
 
@@ -39,15 +44,23 @@ object TwoWayMessage {
       (__ \ "subject").write[String] and
       (__ \ "content").write[String] and
       (__ \ "replyTo").writeNullable[String]
-    ) ((m: TwoWayMessage) =>
-    (m.contactDetails, HtmlFormat.escape(m.subject).body, HTMLEncoder.encode(m.content), m.replyTo) )
+  )(
+    (m: TwoWayMessage) =>
+      (
+        m.contactDetails,
+        HtmlFormat.escape(m.subject).body,
+        HTMLEncoder.encode(m.content),
+        m.replyTo
+    ))
 }
 
 case class TwoWayMessageReply(content: String)
 
 object TwoWayMessageReply {
-     implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
-     ( JsPath \ "content").write[String].contramap((m: TwoWayMessageReply) => HTMLEncoder.encode(m.content))
+  implicit val twoWayMessageReplyWrites: Writes[TwoWayMessageReply] =
+    (JsPath \ "content")
+      .write[String]
+      .contramap((m: TwoWayMessageReply) => HTMLEncoder.encode(m.content))
 }
 
 case class Identifier(id: String)
@@ -59,12 +72,11 @@ object Identifier {
 
 case class MessageError(text: String)
 
-
 object HTMLEncoder {
 
-  def encode(text:String): String = {
+  def encode(text: String): String = {
 
-    val xhtml = splitParas(text).map{para =>
+    val xhtml = splitParas(text).map { para =>
       <p>{text2XML(para)}</p>
     }
     val xhtmlText = xhtml.mkString
@@ -74,23 +86,23 @@ object HTMLEncoder {
   private def base64Encode(text: String): String =
     new String(Base64.encodeBase64String(text.getBytes("UTF-8")))
 
-  private def splitParas(text: String): Seq[String] = {
-    text.replaceAll("\r","").split("[\\n]{2,}")
-  }
+  private def splitParas(text: String): Seq[String] =
+    text.replaceAll("\r", "").split("[\\n]{2,}")
 
-  private def text2XML(text: String):Seq[Node] = {
+  private def text2XML(text: String): Seq[Node] = {
 
-    def build(c: Char):Node = c match {
-      case '<' => Text("<")
-      case '>' => Text(">")
-      case '&' => Text("&")
-      case '\n' => <br/>
-      case _ =>  Text(c.toString)
+    def build(c: Char): Node =
+      c match {
+        case '<'  => Text("<")
+        case '>'  => Text(">")
+        case '&'  => Text("&")
+        case '\n' => <br/>
+        case _    => Text(c.toString)
+      }
+
+    text.foldLeft[NodeBuffer](new NodeBuffer()) { (s, c) =>
+      s += build(c)
     }
-
-    text.foldLeft[NodeBuffer](new NodeBuffer()){ (s,c) => s += build(c)}
   }
 
 }
-
-

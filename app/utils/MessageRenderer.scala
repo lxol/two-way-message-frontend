@@ -27,33 +27,38 @@ import views.html.rendered_message
 
 class MessageRenderer {
 
-    def renderMessages(messages: List[ConversationItem]): Html= rendered_messages(messages)
+  def renderMessages(messages: List[ConversationItem]): Html =
+    rendered_messages(messages)
 
-    def renderMessage(message: ConversationItem): Html= rendered_message(message)
+  def renderMessage(message: ConversationItem): Html = rendered_message(message)
 
 }
 
 object DateUtils {
-    def getDateText(message: ConversationItem): String = {
-        val messageDate = extractMessageDate(message)
-        message.body.map{
-            details =>
-                details.`type` match {
-                    case MessageType.Customer => s"You sent this message on ${messageDate}"
-                    case MessageType.Adviser => s"This message was sent to you on ${messageDate}"
-                    case _ => defaultDateText(messageDate)
-                }
-        }.getOrElse(defaultDateText(messageDate))
-    }
-
-    def extractMessageDate(message: ConversationItem): String =
-        message.body.get.issueDate match {
-            case Some(issueDate) => formatter(issueDate)
-            case None => formatter(message.validFrom)
+  def getDateText(message: ConversationItem): String = {
+    val messageDate = extractMessageDate(message)
+    message.body
+      .map { details =>
+        details.`type` match {
+          case MessageType.Customer =>
+            s"You sent this message on $messageDate"
+          case MessageType.Adviser =>
+            s"This message was sent to you on $messageDate"
+          case _ => defaultDateText(messageDate)
         }
-    private def defaultDateText(dateStr: String) = s"This message was sent on $dateStr"
+      }
+      .getOrElse(defaultDateText(messageDate))
+  }
 
-    private val dateFormatter = DateTimeFormat.forPattern("dd MMMM yyyy")
-    private def formatter(date: LocalDate):String = date.toString(dateFormatter)
+  def extractMessageDate(message: ConversationItem): String =
+    message.body.get.issueDate match {
+      case Some(issueDate) => formatter(issueDate)
+      case None            => formatter(message.validFrom)
+    }
+  private def defaultDateText(dateStr: String) =
+    s"This message was sent on $dateStr"
+
+  private val dateFormatter = DateTimeFormat.forPattern("dd MMMM yyyy")
+  private def formatter(date: LocalDate): String = date.toString(dateFormatter)
 
 }

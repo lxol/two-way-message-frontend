@@ -16,44 +16,54 @@
 
 package controllers.binders
 
-import models.{Identifier, MessageError}
+import models.{ Identifier, MessageError }
 import play.api.mvc.QueryStringBindable
 
 object Binders {
 
-  implicit def queryStringIdentifierBinder(implicit stringBinder: QueryStringBindable[String]) = new QueryStringBindable[Identifier] {
+  implicit def queryStringIdentifierBinder(
+    implicit
+    stringBinder: QueryStringBindable[String]) =
+    new QueryStringBindable[Identifier] {
 
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Identifier]] = {
-      stringBinder.bind(key,params) match {
-        case Some(idParam) => idParam match {
-          case Right(id) => Some(Right(Identifier(id)))
-          case Left(_) => None
+      override def bind(
+        key: String,
+        params: Map[String, Seq[String]]
+      ): Option[Either[String, Identifier]] =
+        stringBinder.bind(key, params) match {
+          case Some(idParam) =>
+            idParam match {
+              case Right(id) => Some(Right(Identifier(id)))
+              case Left(_)   => None
+            }
+          case _ => None
         }
-        case _ => None
-      }
+
+      override def unbind(key: String, identifier: Identifier): String =
+        stringBinder.unbind(key, identifier.id)
+
     }
 
-    override def unbind(key: String, identifier: Identifier): String = {
-      stringBinder.unbind(key,identifier.id)
-    }
+  implicit def queryStringMessageErrorBinder(
+    implicit
+    stringBinder: QueryStringBindable[String]) =
+    new QueryStringBindable[MessageError] {
 
-  }
-
-  implicit def queryStringMessageErrorBinder(implicit stringBinder: QueryStringBindable[String]) = new QueryStringBindable[MessageError] {
-
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MessageError]] = {
-      stringBinder.bind(key,params) match {
-        case Some(errorParam) => errorParam match {
-          case Right(error) => Some(Right(MessageError(error)))
-          case Left(_) => None
+      override def bind(
+        key: String,
+        params: Map[String, Seq[String]]
+      ): Option[Either[String, MessageError]] =
+        stringBinder.bind(key, params) match {
+          case Some(errorParam) =>
+            errorParam match {
+              case Right(error) => Some(Right(MessageError(error)))
+              case Left(_)      => None
+            }
+          case _ => None
         }
-        case _ => None
-      }
-    }
 
-    override def unbind(key: String, error: MessageError): String = {
-      stringBinder.unbind(key,error.text)
+      override def unbind(key: String, error: MessageError): String =
+        stringBinder.unbind(key, error.text)
     }
-  }
 
 }

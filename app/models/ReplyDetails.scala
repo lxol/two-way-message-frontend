@@ -20,7 +20,6 @@ import play.api.libs.json._
 
 case class ReplyDetails(content: String)
 
-
 object ReplyDetails {
   implicit val format = Json.format[ReplyDetails]
 }

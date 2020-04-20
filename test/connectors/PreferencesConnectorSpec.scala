@@ -23,7 +23,7 @@ import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.ArgumentMatchers
@@ -31,19 +31,23 @@ import org.mockito.Mockito.when
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.Nino
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with Eventually {
 
   lazy implicit val hc = new HeaderCarrier()
 
   val preferencesConnector: PreferencesConnector = mock[PreferencesConnector]
-  val twoWayMessageConnector: TwoWayMessageConnector = mock[TwoWayMessageConnector]
+  val twoWayMessageConnector: TwoWayMessageConnector =
+    mock[TwoWayMessageConnector]
   val httpClient: HttpClient = mock[HttpClient]
-  val entityResolverConnector: EntityResolverConnector = mock[EntityResolverConnector]
+  val entityResolverConnector: EntityResolverConnector =
+    mock[EntityResolverConnector]
 
   lazy val injector = new GuiceApplicationBuilder()
-    .configure(Configuration("metrics.enabled" -> false, "testserver.port" -> 8990))
+    .configure(
+      Configuration("metrics.enabled" -> false, "testserver.port" -> 8990)
+    )
     .overrides(new AbstractModule with ScalaModule {
       override def configure(): Unit = {
         bind[EntityResolverConnector].toInstance(entityResolverConnector)
@@ -52,8 +56,6 @@ class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with
       }
     })
     .injector()
-
-
 
   "PreferencesConnector" should {
     "return an email address when matching NINO is found" in {
@@ -75,18 +77,27 @@ class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with
                         |	"entityId":"e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"
                         |  }""".stripMargin
 
+      when(entityResolverConnector.resolveEntityIdFromNino(Nino("AB123456C")))
+        .thenReturn(Future.successful(""))
 
-      when( entityResolverConnector.resolveEntityIdFromNino( Nino("AB123456C") ) ).thenReturn( Future.successful("") )
-
-      when( httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn{
-        Future.successful( HttpResponse(200, Some(Json.parse(prefReply)) ) )
+      when(
+        httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn {
+        Future.successful(HttpResponse(200, Some(Json.parse(prefReply))))
       }
 
       val component = injector.instanceOf[PreferencesConnector]
 
-      val result = Await.result( component.getPreferredEmail("AB123456C"), scala.concurrent.duration.Duration.Inf )
+      val result = Await.result(
+        component.getPreferredEmail("AB123456C"),
+        scala.concurrent.duration.Duration.Inf
+      )
 
-      assert( result == "test@dummy.com" )
+      assert(result == "test@dummy.com")
     }
 
     "return an empty string when matching NINO is found but it is not verified" in {
@@ -108,18 +119,27 @@ class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with
                         |	"entityId":"e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"
                         |  }""".stripMargin
 
+      when(entityResolverConnector.resolveEntityIdFromNino(Nino("AB123456C")))
+        .thenReturn(Future.successful(""))
 
-      when( entityResolverConnector.resolveEntityIdFromNino( Nino("AB123456C") ) ).thenReturn( Future.successful("") )
-
-      when( httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn{
-        Future.successful( HttpResponse(200, Some(Json.parse(prefReply)) ) )
+      when(
+        httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn {
+        Future.successful(HttpResponse(200, Some(Json.parse(prefReply))))
       }
 
       val component = injector.instanceOf[PreferencesConnector]
 
-      val result = Await.result( component.getPreferredEmail("AB123456C"), scala.concurrent.duration.Duration.Inf )
+      val result = Await.result(
+        component.getPreferredEmail("AB123456C"),
+        scala.concurrent.duration.Duration.Inf
+      )
 
-      assert( result == "" )
+      assert(result == "")
     }
 
     "return an empty string when matching NINO is found but it is has bounced" in {
@@ -141,34 +161,52 @@ class PreferencesConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with
                         |	"entityId":"e6e5ac52-71f1-46d7-b662-39b5c1deb1d8"
                         |  }""".stripMargin
 
+      when(entityResolverConnector.resolveEntityIdFromNino(Nino("AB123456C")))
+        .thenReturn(Future.successful(""))
 
-      when( entityResolverConnector.resolveEntityIdFromNino( Nino("AB123456C") ) ).thenReturn( Future.successful("") )
-
-      when( httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn{
-        Future.successful( HttpResponse(200, Some(Json.parse(prefReply)) ) )
+      when(
+        httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn {
+        Future.successful(HttpResponse(200, Some(Json.parse(prefReply))))
       }
 
       val component = injector.instanceOf[PreferencesConnector]
 
-      val result = Await.result( component.getPreferredEmail("AB123456C"), scala.concurrent.duration.Duration.Inf )
+      val result = Await.result(
+        component.getPreferredEmail("AB123456C"),
+        scala.concurrent.duration.Duration.Inf
+      )
 
-      assert( result == "" )
+      assert(result == "")
     }
 
     "return an empty string when unable to connect to the preferance service" in {
-      when( entityResolverConnector.resolveEntityIdFromNino( Nino("AB123456C") ) ).thenReturn( Future.successful("") )
+      when(entityResolverConnector.resolveEntityIdFromNino(Nino("AB123456C")))
+        .thenReturn(Future.successful(""))
 
-      when( httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn{
-        Future.failed( new Exception("NO PREFERANCE SERVER") )
+      when(
+        httpClient.GET[HttpResponse](ArgumentMatchers.anyString())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn {
+        Future.failed(new Exception("NO PREFERANCE SERVER"))
       }
 
       val component = injector.instanceOf[PreferencesConnector]
 
-      val result = Await.result( component.getPreferredEmail("AB123456C"), scala.concurrent.duration.Duration.Inf )
+      val result = Await.result(
+        component.getPreferredEmail("AB123456C"),
+        scala.concurrent.duration.Duration.Inf
+      )
 
-      assert( result == "" )
+      assert(result == "")
     }
-
 
   }
 }

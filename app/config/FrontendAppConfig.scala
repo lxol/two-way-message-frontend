@@ -16,8 +16,8 @@
 
 package config
 
-import com.google.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
+import com.google.inject.{ Inject, Singleton }
+import play.api.{ Configuration, Environment }
 import play.api.i18n.Lang
 import controllers.routes
 import play.api.mvc.Call
@@ -43,20 +43,30 @@ trait AppConfig {
 }
 
 @Singleton
-class FrontendAppConfig @Inject() (override val runModeConfiguration: Configuration, environment: Environment) extends AppConfig with ServicesConfig {
+class FrontendAppConfig @Inject()(
+  override val runModeConfiguration: Configuration,
+  environment: Environment
+) extends AppConfig with ServicesConfig {
 
   override protected def mode = environment.mode
 
-  private def loadConfig(key: String) = runModeConfiguration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+  private def loadConfig(key: String) =
+    runModeConfiguration
+      .getString(key)
+      .getOrElse(throw new Exception(s"Missing configuration key: $key"))
 
-  private lazy val contactHost = runModeConfiguration.getString("contact-frontend.host").getOrElse("")
-  private lazy val personalTaxHost = runModeConfiguration.getString("personal-account.host").getOrElse("")
+  private lazy val contactHost =
+    runModeConfiguration.getString("contact-frontend.host").getOrElse("")
+  private lazy val personalTaxHost =
+    runModeConfiguration.getString("personal-account.host").getOrElse("")
   private val contactFormServiceIdentifier = "twowaymessagefrontend"
 
   lazy val analyticsToken = loadConfig(s"google-analytics.token")
   lazy val analyticsHost = loadConfig(s"google-analytics.host")
-  lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
-  lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
+  lazy val reportAProblemPartialUrl =
+    s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
+  lazy val reportAProblemNonJSUrl =
+    s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 //  lazy val betaFeedbackUrl = s"$contactHost/contact/beta-feedback"
 //  lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated"
   lazy val personalAccountUrl = s"$personalTaxHost/personal-account"
@@ -66,11 +76,14 @@ class FrontendAppConfig @Inject() (override val runModeConfiguration: Configurat
 //  lazy val loginUrl = loadConfig("urls.login")
 //  lazy val loginContinueUrl = loadConfig("urls.loginContinue")
 
-  lazy val languageTranslationEnabled = runModeConfiguration.getBoolean("microservice.services.features.welsh-translation").getOrElse(true)
-  def languageMap: Map[String, Lang] = Map(
-    "english" -> Lang("en"),
-    "cymraeg" -> Lang("cy"))
-  def routeToSwitchLanguage: String => Call = (lang: String) => routes.LanguageSwitchController.switchToLanguage(lang)
+  lazy val languageTranslationEnabled = runModeConfiguration
+    .getBoolean("microservice.services.features.welsh-translation")
+    .getOrElse(true)
+  def languageMap: Map[String, Lang] =
+    Map("english" -> Lang("en"), "cymraeg" -> Lang("cy"))
+  def routeToSwitchLanguage: String => Call =
+    (lang: String) => routes.LanguageSwitchController.switchToLanguage(lang)
 
-  lazy val perfTestFlag = runModeConfiguration.getBoolean("perf-test-flag").getOrElse(false)
+  lazy val perfTestFlag =
+    runModeConfiguration.getBoolean("perf-test-flag").getOrElse(false)
 }
