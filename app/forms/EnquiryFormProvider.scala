@@ -32,12 +32,12 @@ class EnquiryFormProvider @Inject()(messagesApi: MessagesApi) {
         "enquiryType" -> nonEmptyText,
         "subject" -> nonEmptyTextWithError("Enter a subject")
           .verifying(subjectConstraint),
-        "question" -> nonEmptyTextWithError("Enter a question")
-          .verifying(contentConstraint),
-        "email" -> email,
         "telephone" -> nonEmptyTextWithError("Enter a telephone number")
           .verifying(telephoneConstraint),
-        "taxId" -> text
+        "email" -> email,
+        "taxId" -> text,
+        "question" -> nonEmptyTextWithError("Enter a question")
+          .verifying(contentConstraint)
       )(EnquiryDetails.apply)(EnquiryDetails.unapply)
     )
 

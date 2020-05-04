@@ -177,7 +177,7 @@ class ReplyControllerFrontendSpec
       click on find(id("submit")).value
       eventually {
         pageSource must include(
-          "HMRC received your message and will reply within"
+          "HMRC received your message and will aim to reply within"
         )
       }
     }

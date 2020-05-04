@@ -19,7 +19,7 @@ package controllers
 import config.AppConfig
 import connectors.TwoWayMessageConnector
 import javax.inject.Inject
-import models.{ Identifier, MessageError, SubmissionDetails }
+import models.{ Identifier, SubmissionDetails }
 import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.mvc.{ Request, Result }
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthorisedFunctions }
@@ -103,9 +103,13 @@ class BaseController @Inject()(
             )
       })
 
-  def extractId(response: HttpResponse): Either[MessageError, Identifier] =
-    response.json.validate[Identifier].asOpt match {
-      case Some(identifier) => Right(identifier)
-      case None             => Left(MessageError("Missing reference"))
+  def extractId(response: HttpResponse): Either[Result, Identifier] =
+    try {
+      response.json.validate[Identifier].asOpt match {
+        case Some(identifier) => Right(identifier)
+        case None             => Left(PreconditionFailed("Missing reference"))
+      }
+    } catch {
+      case _: Throwable => Left(PreconditionFailed("Missing reference"))
     }
 }

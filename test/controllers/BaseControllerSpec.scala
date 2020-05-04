@@ -17,28 +17,21 @@
 package controllers
 
 import com.google.inject.AbstractModule
-import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
-import connectors.{ PreferencesConnector, TwoWayMessageConnector }
-import models.{ EnquiryDetails, Identifier, MessageError, SubmissionDetails }
+import connectors.TwoWayMessageConnector
+import models.{ Identifier, SubmissionDetails }
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
-import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import play.api.http.Status
 import play.api.i18n.I18nSupport
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.AnyContentAsFormUrlEncoded
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{ Application, Configuration, Environment }
-import play.mvc.Http
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, UnsupportedAffinityGroup }
-import uk.gov.hmrc.domain.Nino
+import play.api.Application
+import play.api.mvc.Results.PreconditionFailed
+
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 import scala.concurrent.Future
@@ -97,7 +90,7 @@ class BaseControllerSpec extends ControllerSpecBase with MockAuthConnector with 
       val result = controller.extractId(
         HttpResponse(Status.CREATED, Some(bad2wmPostMessageResponse))
       )
-      result.left.get shouldBe MessageError("Missing reference")
+      result.left.get shouldBe PreconditionFailed("Missing reference")
     }
   }
 

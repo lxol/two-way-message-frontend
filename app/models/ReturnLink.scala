@@ -16,17 +16,4 @@
 
 package models
 
-import play.api.libs.json._
-
-case class EnquiryDetails(
-  enquiryType: String,
-  subject: String,
-  telephone: String,
-  email: String,
-  taxId: String,
-  question: String
-)
-
-object EnquiryDetails {
-  implicit val format = Json.format[EnquiryDetails]
-}
+case class ReturnLink(url: String, text: String)

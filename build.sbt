@@ -37,7 +37,6 @@ lazy val root = (project in file("."))
          }.value
        )
     ),
-    RoutesKeys.routesImport ++= Seq("models._"),
     PlayKeys.playDefaultPort := 8990,
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
       ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;" +

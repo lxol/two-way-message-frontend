@@ -20,7 +20,7 @@ import config.AppConfig
 import connectors.TwoWayMessageConnector
 import forms.ReplyFormProvider
 import javax.inject.{ Inject, Singleton }
-import models.{ Identifier, MessageError, ReplyDetails, SubmissionDetails }
+import models.ReplyDetails
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{ Action, AnyContent, Request, Result }
@@ -39,8 +39,7 @@ class ReplyController @Inject()(
   authConnector: AuthConnector,
   messagesApi: MessagesApi,
   twoWayMessageConnector: TwoWayMessageConnector,
-  formProvider: ReplyFormProvider,
-  messageRenderer: MessageRenderer
+  formProvider: ReplyFormProvider
 )(override implicit val ec: ExecutionContext)
     extends BaseController(
       appConfig,
@@ -121,21 +120,14 @@ class ReplyController @Inject()(
                         enquiry_submitted(
                           appConfig,
                           id.id,
-                          details.responseTime
+                          details.responseTime,
+                          enquiryType,
+                          None
                         )
                       )
                     )
-                  case Left(error) =>
-                    Future.successful(
-                      Ok(
-                        error_template(
-                          "Error",
-                          "There was an error:",
-                          error.text,
-                          appConfig
-                        )
-                      )
-                    )
+                  case Left(errorPage) =>
+                    Future.successful(errorPage)
                 }
               case _ =>
                 Future.successful(

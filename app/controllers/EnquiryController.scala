@@ -16,21 +16,25 @@
 
 package controllers
 
+import java.net.{ URI, URISyntaxException }
+
 import config.AppConfig
 import connectors.{ PreferencesConnector, TwoWayMessageConnector }
 import forms.EnquiryFormProvider
 import javax.inject.{ Inject, Singleton }
-import models.EnquiryDetails
+import models.{ EnquiryDetails, ReturnLink }
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{ Action, AnyContent, Request, Result }
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, AuthorisationException }
+import uk.gov.hmrc.crypto.{ ApplicationCrypto, Crypted }
 import views.html.{ enquiry, enquiry_submitted, error_template }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success, Try }
 
 @Singleton
 class EnquiryController @Inject()(
@@ -39,7 +43,8 @@ class EnquiryController @Inject()(
   formProvider: EnquiryFormProvider,
   authConnector: AuthConnector,
   twoWayMessageConnector: TwoWayMessageConnector,
-  preferencesConnector: PreferencesConnector
+  preferencesConnector: PreferencesConnector,
+  crypto: ApplicationCrypto
 )(override implicit val ec: ExecutionContext)
     extends BaseController(
       appConfig,
@@ -50,34 +55,36 @@ class EnquiryController @Inject()(
 
   val form: Form[EnquiryDetails] = formProvider()
 
-  def onPageLoad(enquiryType: String): Action[AnyContent] =
+  def onPageLoad(enquiryType: String, returnLink: Option[ReturnLink]): Action[AnyContent] =
     Action.async { implicit request =>
       authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.nino) { nino =>
         for {
-          email <- nino.fold(Future.successful(""))(
-                    preferencesConnector.getPreferredEmail(_)
-                  )
+          email             <- nino.fold(Future.successful(""))(preferencesConnector.getPreferredEmail(_))
           submissionDetails <- getEnquiryTypeDetails(enquiryType)
+          decryptedReturnLink = validateEncryptedReturnLink(returnLink)
         } yield
-          submissionDetails.fold(
-            (errorPage: Result) => errorPage,
-            details =>
+          (submissionDetails, decryptedReturnLink) match {
+            case (Right(details), Right(_)) =>
               Ok(
                 enquiry(
                   appConfig,
                   form,
-                  EnquiryDetails(enquiryType, "", "", email, "", details.taxId),
-                  details.responseTime
+                  EnquiryDetails(enquiryType, "", "", email, details.taxId, ""),
+                  details.responseTime,
+                  enquiryType,
+                  returnLink
                 )
-            )
-          )
+              )
+            case (Left(errorPage), _) => errorPage
+            case (_, Left(errorPage)) => errorPage
+          }
       } recoverWith {
         case _: AuthorisationException => Future.successful(Unauthorized)
         case _                         => Future.successful(InternalServerError)
       }
     }
 
-  def onSubmit(): Action[AnyContent] =
+  def onSubmit(returnLink: Option[ReturnLink]): Action[AnyContent] =
     Action.async { implicit request =>
       authorised(AuthProviders(GovernmentGateway)) {
         val enquiryType = form.bindFromRequest().data("enquiryType")
@@ -93,13 +100,15 @@ class EnquiryController @Inject()(
                         appConfig,
                         formWithErrors,
                         rebuildFailedForm(formWithErrors, details.taxId),
-                        details.responseTime
+                        details.responseTime,
+                        enquiryType,
+                        returnLink
                       )
                     )
                   )
                 },
                 enquiryDetails => {
-                  submitMessage(enquiryDetails, details.responseTime)
+                  submitMessage(enquiryDetails, details.responseTime, returnLink)
                 }
               )
           case Left(errorPage) => Future.successful(errorPage)
@@ -107,46 +116,48 @@ class EnquiryController @Inject()(
       }
     }
 
-  def submitMessage(enquiryDetails: EnquiryDetails, responseTime: String)(
+  def submitMessage(enquiryDetails: EnquiryDetails, responseTime: String, returnLink: Option[ReturnLink])(
     implicit request: Request[_]
   ): Future[Result] =
-    twoWayMessageConnector
-      .postMessage(enquiryDetails)
-      .map(response =>
-        response.status match {
-          case CREATED =>
-            extractId(response) match {
-              case Right(id) =>
-                Ok(enquiry_submitted(appConfig, id.id, responseTime))
-              case Left(error) =>
-                Ok(
-                  error_template(
-                    "Error",
-                    "There was an error:",
-                    error.text,
-                    appConfig
-                  )
-                )
-            }
-          case _ =>
-            Ok(
-              error_template(
-                "Error",
-                "There was an error:",
-                "Error sending enquiry details",
-                appConfig
-              )
+    for {
+      response <- twoWayMessageConnector.postMessage(enquiryDetails)
+      identifier = extractId(response)
+      decryptedReturnLink = validateEncryptedReturnLink(returnLink)
+    } yield
+      (response.status, identifier, decryptedReturnLink) match {
+        case (CREATED, Right(id), Right(returnLink)) =>
+          Ok(enquiry_submitted(appConfig, id.id, responseTime, enquiryDetails.enquiryType, returnLink))
+        case (_, Left(errorPage), _) => errorPage
+        case (_, _, Left(errorPage)) => errorPage
+        case _ =>
+          Ok(
+            error_template(
+              "Error",
+              "There was an error:",
+              "Error sending enquiry details",
+              appConfig
             )
-      })
+          )
+      }
 
-  def messagesRedirect: Action[AnyContent] =
-    Action {
-      Redirect(appConfig.messagesFrontendUrl)
-    }
-
-  def personalAccountRedirect: Action[AnyContent] =
-    Action {
-      Redirect(appConfig.personalAccountUrl)
+  private def validateEncryptedReturnLink(returnLink: Option[ReturnLink]): Either[Result, Option[ReturnLink]] =
+    returnLink.map { link =>
+      val validatedUrl = Try {
+        val encryptedUrl = crypto.QueryParameterCrypto.decrypt(Crypted(link.url)).value
+        new URI(encryptedUrl).toString
+      }
+      val decryptedText = Try(crypto.QueryParameterCrypto.decrypt(Crypted(link.text)).value)
+      (validatedUrl, decryptedText)
+    } match {
+      case Some(x) =>
+        x match {
+          case (Success(url), Success(text))       => Right(Some(ReturnLink(url, text)))
+          case (Failure(_: SecurityException), _)  => Left(BadRequest("Poorly encrypted return link url"))
+          case (Failure(_: URISyntaxException), _) => Left(BadRequest("Invalid return link url"))
+          case (_, Failure(_: SecurityException))  => Left(BadRequest("Poorly encrypted return link text"))
+          case _                                   => Left(BadRequest("An error occurred whilst attempting to validate the return link parameters"))
+        }
+      case None => Right(None)
     }
 
   private def rebuildFailedForm(
@@ -156,9 +167,9 @@ class EnquiryController @Inject()(
     EnquiryDetails(
       formWithErrors.data.getOrElse("enquiryType", ""),
       formWithErrors.data.getOrElse("subject", ""),
-      formWithErrors.data.getOrElse("question", ""),
-      formWithErrors.data.getOrElse("email", ""),
       formWithErrors.data.getOrElse("telephone", ""),
-      taxId
+      formWithErrors.data.getOrElse("email", ""),
+      taxId,
+      formWithErrors.data.getOrElse("question", "")
     )
 }

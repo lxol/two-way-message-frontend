@@ -29,13 +29,10 @@ trait AppConfig {
   val analyticsHost: String
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
-//  val betaFeedbackUrl: String
-//  val betaFeedbackUnauthenticatedUrl: String
   val personalAccountUrl: String
-  val messagesFrontendUrl: String
-//  val authUrl: String
-//  val loginUrl: String
-//  val loginContinueUrl: String
+  val businessAccountUrl: String
+  val ptaInboxUrl: String
+  val btaInboxUrl: String
   val languageTranslationEnabled: Boolean
   val perfTestFlag: Boolean
   def languageMap: Map[String, Lang]
@@ -59,6 +56,8 @@ class FrontendAppConfig @Inject()(
     runModeConfiguration.getString("contact-frontend.host").getOrElse("")
   private lazy val personalTaxHost =
     runModeConfiguration.getString("personal-account.host").getOrElse("")
+  private lazy val businessTaxHost =
+    runModeConfiguration.getString("business-account.host").getOrElse("")
   private val contactFormServiceIdentifier = "twowaymessagefrontend"
 
   lazy val analyticsToken = loadConfig(s"google-analytics.token")
@@ -67,14 +66,12 @@ class FrontendAppConfig @Inject()(
     s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   lazy val reportAProblemNonJSUrl =
     s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
-//  lazy val betaFeedbackUrl = s"$contactHost/contact/beta-feedback"
-//  lazy val betaFeedbackUnauthenticatedUrl = s"$contactHost/contact/beta-feedback-unauthenticated"
-  lazy val personalAccountUrl = s"$personalTaxHost/personal-account"
-  lazy val messagesFrontendUrl = s"$personalAccountUrl/messages"
 
-//  lazy val authUrl = baseUrl("auth")
-//  lazy val loginUrl = loadConfig("urls.login")
-//  lazy val loginContinueUrl = loadConfig("urls.loginContinue")
+  lazy val personalAccountUrl = s"$personalTaxHost/personal-account"
+  lazy val ptaInboxUrl = s"$personalAccountUrl/messages"
+
+  lazy val businessAccountUrl = s"$businessTaxHost/business-account"
+  lazy val btaInboxUrl = s"$businessAccountUrl/messages"
 
   lazy val languageTranslationEnabled = runModeConfiguration
     .getBoolean("microservice.services.features.welsh-translation")

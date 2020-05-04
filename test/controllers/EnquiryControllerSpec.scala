@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule
 import config.FrontendAppConfig
 import connectors.mocks.MockAuthConnector
 import connectors.{ PreferencesConnector, TwoWayMessageConnector }
-import models.{ EnquiryDetails, Identifier, MessageError, SubmissionDetails }
+import models.EnquiryDetails
 import net.codingwell.scalaguice.ScalaModule
 import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
@@ -96,7 +96,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
         Future.successful(Some(nino.value))
       )
-      val result = call(controller.onPageLoad("p800-overpayment"), fakeRequest)
+      val result = call(controller.onPageLoad("p800-overpayment", None), fakeRequest)
 
       status(result) shouldBe Status.OK
       val document = Jsoup.parse(contentAsString(result))
@@ -114,7 +114,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
         Future.failed(new UnsupportedAffinityGroup(""))
       )
-      val result = call(controller.onPageLoad("p800-overpayment"), fakeRequest)
+      val result = call(controller.onPageLoad("p800-overpayment", None), fakeRequest)
 
       status(result) shouldBe Status.UNAUTHORIZED
     }
@@ -127,7 +127,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
         Future.successful(None)
       )
-      val result = call(controller.onPageLoad("epaye-general"), fakeRequest)
+      val result = call(controller.onPageLoad("epaye-general", None), fakeRequest)
       verify(mockPreferencesConnector, never())
         .getPreferredEmail(any[String])(any[HeaderCarrier])
       status(result) shouldBe Status.OK
@@ -141,7 +141,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
   // Please see integration tests for auth failure scenarios as these are handled by the ErrorHandler class
   "calling onSubmit() for P800" should {
-    val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit())
+    val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit(None))
     val requestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
       fakeRequestWithForm.withFormUrlEncodedBody(
         "enquiryType" -> "p800",
@@ -155,10 +155,10 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
     val enquiryDetails = EnquiryDetails(
       "p800",
       "subject",
-      "question",
-      "test@test.com",
       "07700 900077",
-      "AB123456C"
+      "test@test.com",
+      "AB123456C",
+      "question"
     )
 
     val badRequestWithFormData: FakeRequest[AnyContentAsFormUrlEncoded] =
@@ -186,12 +186,11 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
           HttpResponse(Http.Status.CREATED, Some(twmPostMessageResponse))
         )
       )
-      val result = await(call(controller.onSubmit(), requestWithFormData))
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
       result.header.status shouldBe Status.OK
-//      result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeId=5c18eb166f0000110204b160"
     }
 
-    "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
+    "return 412 (PRECONDITION_FAILED) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
       val bad2wmPostMessageResponse = Json.parse("{}")
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(
@@ -205,9 +204,8 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
           HttpResponse(Http.Status.CREATED, Some(bad2wmPostMessageResponse))
         )
       )
-      val result = await(call(controller.onSubmit(), requestWithFormData))
-      result.header.status shouldBe Status.OK
-//      result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeError=Missing+reference"
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
+      result.header.status shouldBe Status.PRECONDITION_FAILED
     }
 
     "return 400 (BAD_REQUEST) when presented with invalid form data" in {
@@ -215,11 +213,11 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       mockAuthorise(AuthProviders(GovernmentGateway))(
         Future.successful(Some(nino.value))
       )
-      val result = call(controller.onSubmit(), badRequestWithFormData)
+      val result = call(controller.onSubmit(None), badRequestWithFormData)
       status(result) shouldBe Status.BAD_REQUEST
     }
 
-    "return 200 (OK) when two-way-message service returns a different status than 201 (CREATED)" in {
+    "return 412 (PRECONDITION_FAILED) when two-way-message service returns a different status than 201 (CREATED)" in {
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(
         Future.successful(Some(nino.value))
@@ -233,16 +231,19 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         )
       )
 
-      val result = await(call(controller.onSubmit(), requestWithFormData))
-      result.header.status shouldBe Status.OK
-//      result.header.headers("Location") shouldBe "/two-way-message-frontend/message/submitted?maybeError=Error+sending+enquiry+details"
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
+      result.header.status shouldBe Status.PRECONDITION_FAILED
     }
   }
 
   "validation should" should {
-    val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit())
+    val fakeRequestWithForm = FakeRequest(routes.EnquiryController.onSubmit(None))
 
     "Successful" in {
+      val twmPostMessageResponse = Json.parse("""
+                                                |    {
+                                                |     "id":"5c18eb166f0000110204b160"
+                                                |    }""".stripMargin)
       val nino = Nino("AB123456C")
       mockAuthorise(AuthProviders(GovernmentGateway))(
         Future.successful(Some(nino.value))
@@ -261,10 +262,10 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       val enquiryDetails = EnquiryDetails(
         "p800",
         "subject",
-        "question",
-        "test@test.com",
         "07700 900077",
-        "AB123456C"
+        "test@test.com",
+        "AB123456C",
+        "question"
       )
 
       when(
@@ -272,11 +273,11 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
           .postMessage(ArgumentMatchers.eq(enquiryDetails))(any[HeaderCarrier])
       ).thenReturn(
         Future.successful(
-          HttpResponse(Http.Status.CONFLICT)
+          HttpResponse(Http.Status.OK, Some(twmPostMessageResponse))
         )
       )
 
-      val result = await(call(controller.onSubmit(), requestWithFormData))
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
       result.header.status shouldBe Status.OK
     }
 
@@ -290,13 +291,13 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         fakeRequestWithForm.withFormUrlEncodedBody(
           "enquiryType" -> "p800",
           "subject"     -> "a" * 66,
-          "question"    -> "test",
-          "email"       -> "test@test.com",
           "telephone"   -> "a" * 26,
-          "taxId"       -> "AB123456C"
+          "email"       -> "test@test.com",
+          "taxId"       -> "AB123456C",
+          "question"    -> "test"
         )
 
-      val result = await(call(controller.onSubmit(), requestWithFormData))
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
       result.header.status shouldBe Status.BAD_REQUEST
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByClass("error-summary-list").html() contains
@@ -321,7 +322,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
           "question"    -> "question"
         )
 
-      val result = await(call(controller.onSubmit(), requestWithFormData))
+      val result = await(call(controller.onSubmit(None), requestWithFormData))
       result.header.status shouldBe Status.BAD_REQUEST
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByClass("error-summary-list").html() shouldBe
@@ -338,7 +339,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         Map("perf-test-flag" -> "true")
       )
       val config = new FrontendAppConfig(configuration, env)
-      enquiry_submitted(config, testMessageId, "7 days").body should include(
+      enquiry_submitted(config, testMessageId, "7 days", "sa-general", None).body should include(
         s"messageId=$testMessageId"
       )
     }
@@ -351,7 +352,9 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       enquiry_submitted(
         config,
         testMessageId,
-        "7 days"
+        "7 days",
+        "sa-general",
+        None
       ).body should not include (s"messageId=$testMessageId")
     }
 
@@ -360,9 +363,10 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
       enquiry_submitted(
         config,
         testMessageId,
-        "7 days"
+        "7 days",
+        "sa-general",
+        None
       ).body should not include (s"messageId=$testMessageId")
     }
-
   }
 }

@@ -15,8 +15,10 @@
  *@
 
 @import config.AppConfig
+@import models.ReturnLink
+@import uk.gov.hmrc.urls.Link
 
-@(appConfig: AppConfig, ref: String, responseTime: String)(implicit request: Request[_], messages: Messages)
+@(appConfig: AppConfig, ref: String, responseTime: String, enquiryType: String, returnLink: Option[ReturnLink])(implicit request: Request[_], messages: Messages)
 
 @main_template(
 title = messages("enquiry.success.title"),
@@ -27,13 +29,17 @@ bodyClasses = None) {
         <div class="transaction-banner__heading">@messages("enquiry.success.heading")</div>
         <p>@messages("enquiry.success.sub_heading") @responseTime</p>
     </div>
+    @components.text("enquiry.success.note.para1")
     <h2 class="heading-medium">@messages("enquiry.success.next.heading")</h2>
-    @components.text("enquiry.success.next.para")
-    @components.text("enquiry.success.next.para1")
-    @components.text("enquiry.success.next.para2")
-    <p>@messages("enquiry.success.next.para3") <a href="@routes.EnquiryController.messagesRedirect()">
-       @messages("enquiry.success.next.link_text")</a> @messages("enquiry.success.next.para4")</p>
-    <a id="start-again" href="@routes.EnquiryController.personalAccountRedirect()" class="button">@messages("site.account.home")</a>
+    <p>@components.text("enquiry.success.next.para1") @responseTime @components.text("enquiry.success.next.para1_1")</p>
+    <p>@components.text("enquiry.success.next.para2")</p>
+    @{
+        returnLink match {
+            case Some(link)                             => Link.toInternalPage(id = Some("redirect-return-link"), url = link.url, value = Some(link.text)).toHtml
+            case _ if (enquiryType.startsWith("p800"))  => Link.toInternalPage(id = Some("redirect-return-link"), url = appConfig.ptaInboxUrl, value = Some(messages("enquiry.success.next.link_text"))).toHtml
+            case _                                      => Link.toInternalPage(id = Some("redirect-return-link"), url = appConfig.btaInboxUrl, value = Some(messages("enquiry.success.next.link_text"))).toHtml
+        }
+    }
 
     @if(appConfig.perfTestFlag) {
     <!--- messageId=@ref -->

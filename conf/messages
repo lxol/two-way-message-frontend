@@ -40,8 +40,10 @@ site.no = No
 site.yes = Yes
 site.continue = Send
 site.account.home = Back to account home
-site.service_name = Personal Tax Account
+site.service.name.pta = Personal Tax Account
+site.service.name.bta = Business Tax Account
 site.textarea.char_limit = (Limit is {0} characters)
+site.signout.try.again = Sign out and try again
 
 enquiry.title = Ask a secure question
 enquiry.heading = Send your message
@@ -59,14 +61,13 @@ enquiry.question.hint = More detail will help us answer your question quickly.
 
 enquiry.success.title = Message sent
 enquiry.success.heading = Message sent
-enquiry.success.sub_heading = HMRC received your message and will reply within
+enquiry.success.sub_heading = HMRC received your message and will aim to reply within
+enquiry.success.note.para1 = We added a copy to your Messages and sent you an email confirmation.
 enquiry.success.next.heading = What happens next
-enquiry.success.next.para = We are working on your reply.
-enquiry.success.next.para1 = You do not need to follow up by sending another message or by calling us.
-enquiry.success.next.para2 = When your reply is ready, we will send you an email to let you know.
-enquiry.success.next.para3 = You can
-enquiry.success.next.para4 = by signing in to HMRC services.
-enquiry.success.next.link_text = view your messages
+enquiry.success.next.para1 = We will aim to reply to you within
+enquiry.success.next.para1_1 = using the contact details you provided.
+enquiry.success.next.para2 = Because we are managing a lot of requests, do not contact HMRC by phone about this question, or send another message/
+enquiry.success.next.link_text = Return to your message inbox
 
 reply.title = Reply to a secure answer
 reply.heading = Send a message about this subject
