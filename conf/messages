@@ -66,7 +66,7 @@ enquiry.success.note.para1 = We added a copy to your Messages and sent you an em
 enquiry.success.next.heading = What happens next
 enquiry.success.next.para1 = We will aim to reply to you within
 enquiry.success.next.para1_1 = using the contact details you provided.
-enquiry.success.next.para2 = Because we are managing a lot of requests, do not contact HMRC by phone about this question, or send another message/
+enquiry.success.next.para2 = Because we are managing a lot of requests, do not contact HMRC by phone about this question, or send another message.
 enquiry.success.next.link_text = Return to your message inbox
 
 reply.title = Reply to a secure answer
