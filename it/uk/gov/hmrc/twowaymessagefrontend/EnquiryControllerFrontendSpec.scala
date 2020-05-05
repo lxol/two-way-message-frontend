@@ -161,7 +161,9 @@ class EnquiryControllerFrontendSpec
 
     "Send a valid SA-GENERAL related message and providing a valid encrypted return link url and a valid return link text query parameters" in {
 
+      // 42aO70DPMFVgpFdKEsKkRfwcq7kMw0YSiwTnpGw3btGr7io%2FVG6FYu6Zek5UBMLE3fLBxbepuESbcCt29JeyBw%3D%3D
       val returnLinkUrl = encrypt("https://www.gov.uk/government/organisations/hm-revenue-customs")
+      // Kyf77o%2FC%2FJ03FwkDxOfx7RhYEgOprgdATfwi8%2BJRdrQFXCPldT1Y4JbwfI%2BvbrzomwfaXOg6us5Q0wO76QDnmQ%3D%3D
       val returnLinkText = encrypt("please click here to return to where you came from")
 
       go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry?returnLinkUrl=$returnLinkUrl&returnLinkText=$returnLinkText"

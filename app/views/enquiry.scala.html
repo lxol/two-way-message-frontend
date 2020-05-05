@@ -19,7 +19,7 @@
 @import controllers.routes._
 @import models.{EnquiryDetails, ReturnLink}
 
-@(appConfig: AppConfig, form: Form[_], defaultEnquiryDetails: EnquiryDetails, responseTime: String, enquiryType: String, returnLink: Option[ReturnLink])(implicit request: Request[_], messages: Messages)
+@(appConfig: AppConfig, form: Form[_], defaultEnquiryDetails: EnquiryDetails, responseTime: String, enquiryType: String, returnLink: Option[ReturnLink], testUrl: String, testText: String)(implicit request: Request[_], messages: Messages)
 
 @main_template(
     title = messages("enquiry.title"),
@@ -95,5 +95,8 @@
 
         @components.submit_button()
     }
+
+    <input type="hidden" id='test-url' name='test-url' value="@{testUrl}">
+    <input type="hidden" id='test-text' name='test-text' value="@{testText}">
 }
 

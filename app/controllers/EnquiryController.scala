@@ -16,7 +16,7 @@
 
 package controllers
 
-import java.net.{ URI, URISyntaxException }
+import java.net.{ URI, URISyntaxException, URLEncoder }
 
 import config.AppConfig
 import connectors.{ PreferencesConnector, TwoWayMessageConnector }
@@ -29,7 +29,7 @@ import play.api.mvc.{ Action, AnyContent, Request, Result }
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, AuthorisationException }
-import uk.gov.hmrc.crypto.{ ApplicationCrypto, Crypted }
+import uk.gov.hmrc.crypto.{ ApplicationCrypto, Crypted, PlainText }
 import views.html.{ enquiry, enquiry_submitted, error_template }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,7 +64,18 @@ class EnquiryController @Inject()(
           decryptedReturnLink = validateEncryptedReturnLink(returnLink)
         } yield
           (submissionDetails, decryptedReturnLink) match {
-            case (Right(details), Right(_)) =>
+            case (Right(details), Right(_)) => {
+              val testUrl = URLEncoder.encode(
+                crypto.QueryParameterCrypto
+                  .encrypt(PlainText("https://www.gov.uk/government/organisations/hm-revenue-customs"))
+                  .value,
+                "UTF-8")
+              val testText = URLEncoder.encode(
+                crypto.QueryParameterCrypto
+                  .encrypt(PlainText("please click here to return to where you came from"))
+                  .value,
+                "UTF-8")
+
               Ok(
                 enquiry(
                   appConfig,
@@ -72,9 +83,12 @@ class EnquiryController @Inject()(
                   EnquiryDetails(enquiryType, "", "", email, details.taxId, ""),
                   details.responseTime,
                   enquiryType,
-                  returnLink
+                  returnLink,
+                  testUrl,
+                  testText
                 )
               )
+            }
             case (Left(errorPage), _) => errorPage
             case (_, Left(errorPage)) => errorPage
           }
@@ -102,7 +116,9 @@ class EnquiryController @Inject()(
                         rebuildFailedForm(formWithErrors, details.taxId),
                         details.responseTime,
                         enquiryType,
-                        returnLink
+                        returnLink,
+                        "",
+                        ""
                       )
                     )
                   )
