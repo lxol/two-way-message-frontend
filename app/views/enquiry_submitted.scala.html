@@ -31,8 +31,8 @@ bodyClasses = None) {
     </div>
     @components.text("enquiry.success.note.para1")
     <h2 class="heading-medium">@messages("enquiry.success.next.heading")</h2>
-    <p>@components.text("enquiry.success.next.para1") @responseTime @components.text("enquiry.success.next.para1_1")</p>
-    <p>@components.text("enquiry.success.next.para2")</p>
+    <p>@messages("enquiry.success.next.para1") @responseTime @messages("enquiry.success.next.para1_1")</p>
+    @components.text("enquiry.success.next.para2")
     @{
         returnLink match {
             case Some(link)                             => Link.toInternalPage(id = Some("redirect-return-link"), url = link.url, value = Some(link.text)).toHtml
