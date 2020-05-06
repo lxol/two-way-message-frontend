@@ -187,6 +187,26 @@ class EnquiryControllerFrontendSpec
       }
     }
 
+    "Return a BAD REQUEST error page when providing a one character return link url and a valid return link text query parameters" in {
+
+      val returnLinkText = encrypt("please click here to return to where you came from")
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry?returnLinkUrl=a&returnLinkText=$returnLinkText"
+
+      eventually {
+        pageSource must include("Invalid return link url")
+      }
+    }
+
+    "Return a BAD REQUEST error page when providing a one character return link text and a valid return link url query parameters" in {
+
+      val returnLinkUrl = encrypt("https://www.gov.uk/government/organisations/hm-revenue-customs")
+      go to s"http://localhost:$port/two-way-message-frontend/message/sa-general/make_enquiry?returnLinkUrl=$returnLinkUrl&returnLinkText=3"
+
+      eventually {
+        pageSource must include("Invalid return link text")
+      }
+    }
+
     "Return a BAD REQUEST error page when providing a poorly encrypted return link text and a valid return link url query parameters" in {
 
       val returnLinkUrl = encrypt("https://www.gov.uk/government/organisations/hm-revenue-customs")

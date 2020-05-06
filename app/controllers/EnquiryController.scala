@@ -151,11 +151,13 @@ class EnquiryController @Inject()(
     } match {
       case Some(x) =>
         x match {
-          case (Success(url), Success(text))       => Right(Some(ReturnLink(url, text)))
-          case (Failure(_: SecurityException), _)  => Left(BadRequest("Poorly encrypted return link url"))
-          case (Failure(_: URISyntaxException), _) => Left(BadRequest("Invalid return link url"))
-          case (_, Failure(_: SecurityException))  => Left(BadRequest("Poorly encrypted return link text"))
-          case _                                   => Left(BadRequest("An error occurred whilst attempting to validate the return link parameters"))
+          case (Success(url), _) if url.length < 2   => Left(BadRequest("Invalid return link url"))
+          case (_, Success(text)) if text.length < 2 => Left(BadRequest("Invalid return link text"))
+          case (Success(url), Success(text))         => Right(Some(ReturnLink(url, text)))
+          case (Failure(_: SecurityException), _)    => Left(BadRequest("Poorly encrypted return link url"))
+          case (Failure(_: URISyntaxException), _)   => Left(BadRequest("Invalid return link url"))
+          case (_, Failure(_: SecurityException))    => Left(BadRequest("Poorly encrypted return link text"))
+          case _                                     => Left(BadRequest("An error occurred whilst attempting to validate the return link parameters"))
         }
       case None => Right(None)
     }
