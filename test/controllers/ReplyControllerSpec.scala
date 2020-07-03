@@ -36,7 +36,7 @@ import org.mockito.Mockito._
 import play.api.libs.json.Json
 import play.mvc.Http
 import play.twirl.api.Html
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import utils.MessageRenderer
@@ -88,10 +88,10 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) enrolment from auth-client" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.email)(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify), Retrievals.email)(
         Future.successful(Some(nino.value))
       )
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       val result = call(
@@ -135,7 +135,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
                      |    }""".stripMargin)
 
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       when(
@@ -159,7 +159,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
     "return 200 (OK) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
       val bad2wmPostMessageResponse = Json.parse("{}")
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       when(
@@ -181,7 +181,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "return 400 (BAD_REQUEST) when presented with invalid form data" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       val result = call(
@@ -193,7 +193,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "return 400 (BAD_REQUEST) when presented with empty form data" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       val result = call(
@@ -210,7 +210,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "return 200 (OK) when two-way-message service returns a different status than 201 (CREATED)" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
 
@@ -241,7 +241,7 @@ class ReplyControllerSpec extends ControllerSpecBase with MockAuthConnector {
 
     "Unsuccessful when subject is too long" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
 

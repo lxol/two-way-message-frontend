@@ -35,7 +35,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{ Application, Configuration, Environment }
 import play.mvc.Http
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, UnsupportedAffinityGroup }
 import uk.gov.hmrc.domain.Nino
@@ -93,7 +93,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         mockPreferencesConnector
           .getPreferredEmail(any[String])(any[HeaderCarrier])
       ).thenReturn(Future.successful("preferredEmail@test.com"))
-      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify), Retrievals.nino)(
         Future.successful(Some(nino.value))
       )
       val result = call(controller.onPageLoad("p800-overpayment", None), fakeRequest)
@@ -111,7 +111,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
         mockPreferencesConnector
           .getPreferredEmail(any[String])(any[HeaderCarrier])
       ).thenReturn(Future.successful("preferredEmail@test.com"))
-      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify), Retrievals.nino)(
         Future.failed(new UnsupportedAffinityGroup(""))
       )
       val result = call(controller.onPageLoad("p800-overpayment", None), fakeRequest)
@@ -124,7 +124,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     "return 200 (OK) when presented with a missing Nino identifier and an enrolment other than HMRC-NI from auth-client" in {
       reset(mockPreferencesConnector)
-      mockAuthorise(AuthProviders(GovernmentGateway), Retrievals.nino)(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify), Retrievals.nino)(
         Future.successful(None)
       )
       val result = call(controller.onPageLoad("epaye-general", None), fakeRequest)
@@ -175,7 +175,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
                      |    }""".stripMargin)
 
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       when(
@@ -193,7 +193,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
     "return 412 (PRECONDITION_FAILED) when presented with a valid Nino (HMRC-NI) credentials but with an invalid payload" in {
       val bad2wmPostMessageResponse = Json.parse("{}")
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       when(
@@ -210,7 +210,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     "return 400 (BAD_REQUEST) when presented with invalid form data" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       val result = call(controller.onSubmit(None), badRequestWithFormData)
@@ -219,7 +219,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     "return 412 (PRECONDITION_FAILED) when two-way-message service returns a different status than 201 (CREATED)" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
       when(
@@ -245,7 +245,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
                                                 |     "id":"5c18eb166f0000110204b160"
                                                 |    }""".stripMargin)
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
 
@@ -283,7 +283,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     "Unsuccessful when subject and telephone are too long" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
 
@@ -308,7 +308,7 @@ class EnquiryControllerSpec extends ControllerSpecBase with MockAuthConnector wi
 
     "Unsuccessful when email is invalid" in {
       val nino = Nino("AB123456C")
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some(nino.value))
       )
 

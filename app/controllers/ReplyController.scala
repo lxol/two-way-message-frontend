@@ -25,9 +25,8 @@ import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{ Action, AnyContent, Request, Result }
 import play.twirl.api.Html
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders }
-import utils.MessageRenderer
 import views.html.{ enquiry_submitted, error_template, reply }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,7 +51,7 @@ class ReplyController @Inject()(
 
   def onPageLoad(enquiryType: String, replyTo: String): Action[AnyContent] =
     Action.async { implicit request =>
-      authorised(AuthProviders(GovernmentGateway)) {
+      authorised(AuthProviders(GovernmentGateway, Verify)) {
         for {
           before <- twoWayMessageConnector.getLatestMessage(replyTo)
           after  <- twoWayMessageConnector.getPreviousMessages(replyTo)
@@ -74,7 +73,7 @@ class ReplyController @Inject()(
 
   def onSubmit(enquiryType: String, replyTo: String): Action[AnyContent] =
     Action.async { implicit request =>
-      authorised(AuthProviders(GovernmentGateway)) {
+      authorised(AuthProviders(GovernmentGateway, Verify)) {
         form
           .bindFromRequest()
           .fold(

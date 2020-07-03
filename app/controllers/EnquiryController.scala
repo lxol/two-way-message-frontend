@@ -26,7 +26,7 @@ import models.{ EnquiryDetails, ReturnLink }
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{ Action, AnyContent, Request, Result }
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{ AuthConnector, AuthProviders, AuthorisationException }
 import uk.gov.hmrc.crypto.{ ApplicationCrypto, Crypted }
@@ -57,7 +57,7 @@ class EnquiryController @Inject()(
 
   def onPageLoad(enquiryType: String, returnLink: Option[ReturnLink]): Action[AnyContent] =
     Action.async { implicit request =>
-      authorised(AuthProviders(GovernmentGateway)).retrieve(Retrievals.nino) { nino =>
+      authorised(AuthProviders(GovernmentGateway, Verify)).retrieve(Retrievals.nino) { nino =>
         for {
           email             <- nino.fold(Future.successful(""))(preferencesConnector.getPreferredEmail(_))
           submissionDetails <- getEnquiryTypeDetails(enquiryType)
@@ -86,7 +86,7 @@ class EnquiryController @Inject()(
 
   def onSubmit(returnLink: Option[ReturnLink]): Action[AnyContent] =
     Action.async { implicit request =>
-      authorised(AuthProviders(GovernmentGateway)) {
+      authorised(AuthProviders(GovernmentGateway, Verify)) {
         val enquiryType = form.bindFromRequest().data("enquiryType")
         getEnquiryTypeDetails(enquiryType).flatMap {
           case Right(details) =>

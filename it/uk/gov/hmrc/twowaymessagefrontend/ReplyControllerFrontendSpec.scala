@@ -35,7 +35,7 @@ import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 import uk.gov.hmrc.twowaymessagefrontend.util.{ ControllerSpecBase, MockAuthConnector }
 import play.twirl.api.Html
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 
 import scala.concurrent.Future
 
@@ -77,10 +77,10 @@ class ReplyControllerFrontendSpec
   "Frontend test" should {
     "find the home page ok" in {
       mockAuthorise(
-        AuthProviders(GovernmentGateway),
+        AuthProviders(GovernmentGateway, Verify),
         OptionalRetrieval("nino", Reads.StringReads)
       )(Future.successful(Some("AB123456C")))
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
       when(
@@ -128,7 +128,7 @@ class ReplyControllerFrontendSpec
 
       val enquiryType = "sa-general"
 
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
 
@@ -187,7 +187,7 @@ class ReplyControllerFrontendSpec
 
       val enquiryType = "sa-general"
 
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
 
@@ -245,7 +245,7 @@ class ReplyControllerFrontendSpec
 
       val enquiryType = "sa-general"
 
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
 
@@ -291,7 +291,7 @@ class ReplyControllerFrontendSpec
 
       val enquiryType = "sa-general"
 
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
 
@@ -342,7 +342,7 @@ class ReplyControllerFrontendSpec
 
       val enquiryType = "sa-general"
 
-      mockAuthorise(AuthProviders(GovernmentGateway))(
+      mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
         Future.successful(Some("AB123456C"))
       )
 

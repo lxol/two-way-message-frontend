@@ -34,7 +34,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{ Application, Configuration }
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{ GovernmentGateway, Verify }
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.OptionalRetrieval
 import uk.gov.hmrc.crypto.{ ApplicationCrypto, PlainText }
@@ -107,11 +107,11 @@ class EnquiryControllerFrontendSpec
     )
 
     mockAuthorise(
-      AuthProviders(GovernmentGateway),
+      AuthProviders(GovernmentGateway, Verify),
       OptionalRetrieval("nino", Reads.StringReads)
     )(Future.successful(Some("AB123456C")))
 
-    mockAuthorise(AuthProviders(GovernmentGateway))(
+    mockAuthorise(AuthProviders(GovernmentGateway, Verify))(
       Future.successful(Some("AB123456C"))
     )
 
