@@ -22,7 +22,7 @@ import play.api.Configuration
 import play.api.mvc.Call
 import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
-class WhitelistFilter @Inject()(
+class AllowlistFilter @Inject()(
   config: Configuration,
   override val mat: Materializer
 ) extends AkamaiWhitelistFilter {
