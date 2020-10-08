@@ -22,8 +22,8 @@ import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
 class FiltersWithAllowlist @Inject()(
   frontendFilters: FrontendFilters,
-  whitelistFilter: AllowlistFilter,
+  allowlistFilter: AllowlistFilter,
   sessionIdFilter: SessionIdFilter
 ) extends DefaultHttpFilters(
-      frontendFilters.filters :+ whitelistFilter :+ sessionIdFilter: _*
+      frontendFilters.filters :+ allowlistFilter :+ sessionIdFilter: _*
     )
